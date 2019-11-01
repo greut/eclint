@@ -81,7 +81,7 @@ func main() {
 	flag.Parse()
 
 	if flagVersion {
-		fmt.Printf("ec %s\n", version)
+		fmt.Printf("eclint %s\n", version)
 		return
 	}
 
@@ -89,6 +89,8 @@ func main() {
 	if len(args) == 0 {
 		args = append(args, ".")
 	}
+
+	log.SetFlags(0)
 
 	files, err := walk(args...)
 	if err != nil {

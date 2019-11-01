@@ -1,4 +1,4 @@
-module github.com/greut/eclint
+module gitlab.com/greut/eclint
 
 go 1.13
 
