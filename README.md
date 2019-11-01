@@ -13,12 +13,13 @@ $ eclint -version
 ## Features
 
 - `end_of_line`
+- `indent_style`
 
 ## Missing features
 
 - `charset`
 - `indent_style`
-- `indent_size`
+- tests
 - etc.
 
 ## Benchmarks

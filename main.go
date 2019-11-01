@@ -17,11 +17,10 @@ var (
 func walk(paths ...string) ([]string, error) {
 	files := make([]string, 0)
 	for _, path := range paths {
-		log.Printf("enter %s\n", path)
 		err := filepath.Walk(path, func(p string, i os.FileInfo, e error) error {
 			mode := i.Mode()
 			if mode.IsRegular() && !mode.IsDir() {
-				log.Printf("add %s\n", p)
+				log.Printf("[DEBUG] index %s\n", p)
 				abs, err := filepath.Abs(p)
 				if err != nil {
 					return err
@@ -44,7 +43,7 @@ func lint(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Cannot open file %s. %w", filename, err)
 	}
-	log.Printf("lint %s %#v", filename, def)
+	log.Printf("[INFO] lint %s", filename)
 
 	fp, err := os.Open(filename)
 	if err != nil {
@@ -52,12 +51,22 @@ func lint(filename string) error {
 	}
 
 	err = readLines(fp, func(index int, data []byte) error {
-		log.Printf("line %d: %s", index, data)
+		var err error
+
 		if def.EndOfLine != "" {
-			err := endOfLine(def.EndOfLine, data)
-			if err != nil {
-				return err
-			}
+			err = endOfLine(def.EndOfLine, data)
+		}
+
+		if err == nil && def.IndentStyle != "" {
+			err = indentStyle(def.IndentStyle, data)
+		}
+
+		if err == nil && def.Charset != "" {
+			err = charset(def.Charset, data)
+		}
+
+		if err != nil {
+			return fmt.Errorf("line %d: %s", index, err)
 		}
 		return nil
 	})
@@ -87,7 +96,7 @@ func main() {
 		os.Exit(1)
 		return
 	}
-	log.Printf("%d files found", len(files))
+	log.Printf("[INFO] %d files found", len(files))
 
 	c := 0
 	for _, file := range files {
