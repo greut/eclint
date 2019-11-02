@@ -79,3 +79,65 @@ func TestEndOfLineFailures(t *testing.T) {
 		})
 	}
 }
+
+func TestTrimTrailingWhitespace(t *testing.T) {
+	tests := []struct {
+		Name string
+		Line []byte
+	}{
+		{
+			Name: "crlf",
+			Line: []byte("\r\n"),
+		}, {
+			Name: "cr",
+			Line: []byte("\r"),
+		}, {
+			Name: "lf",
+			Line: []byte("\n"),
+		}, {
+			Name: "words",
+			Line: []byte("hello world."),
+		}, {
+			Name: "noeol",
+			Line: []byte(""),
+		}, {
+			Name: "nbsp",
+			Line: []byte{0xA0},
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := trimTrailingWhitespace(tc.Line)
+			if err != nil {
+				t.Errorf("No errors where expected, got %s", err)
+			}
+		})
+	}
+}
+
+func TestTrimTrailingWhitespaceFailure(t *testing.T) {
+	tests := []struct {
+		Name string
+		Line []byte
+	}{
+		{
+			Name: "space",
+			Line: []byte(" \r\n"),
+		}, {
+			Name: "tab",
+			Line: []byte("\t"),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := trimTrailingWhitespace(tc.Line)
+			if err == nil {
+				t.Error("An error was expected")
+			}
+		})
+	}
+}
