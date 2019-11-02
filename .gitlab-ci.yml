@@ -1,0 +1,10 @@
+image: golang:1.13
+
+stages:
+  - test
+
+go test:
+  stage: test
+  script:
+    - go test -v
+      -cover -covermode atomic
