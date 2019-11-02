@@ -8,7 +8,7 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
-	"github.com/gogs/chardet"
+	"github.com/saintfish/chardet"
 )
 
 // validate is where the validations rules are applied
