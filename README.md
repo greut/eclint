@@ -21,7 +21,7 @@ $ eclint -version
 
 - `indent_size`
 - `insert_final_newline`
-- tests
+- more tests
 - ignoring `.git`, `vendor`, etc.
 - etc.
 

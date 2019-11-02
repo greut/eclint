@@ -18,7 +18,7 @@ func endOfLine(eol string, data []byte) error {
 			return fmt.Errorf("line should not end with crlf (`\\r\\n`)")
 		}
 	case "crlf":
-		if l > 0 && data[l-1] != '\n' || (l > 1 && data[l-2] != '\r') {
+		if (l > 0 && data[l-1] != '\n') || l == 1 || (l > 1 && data[l-2] != '\r') {
 			return fmt.Errorf("line does not end with crlf (`\\r\\n`)")
 		}
 	case "cr":
