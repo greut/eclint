@@ -1,7 +1,11 @@
 package main
 
 import (
+	"bytes"
 	"testing"
+
+	"github.com/editorconfig/editorconfig-core-go/v2"
+	tlogr "github.com/go-logr/logr/testing"
 )
 
 func TestEndOfLine(t *testing.T) {
@@ -136,6 +140,63 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 			t.Parallel()
 			err := trimTrailingWhitespace(tc.Line)
 			if err == nil {
+				t.Error("An error was expected")
+			}
+		})
+	}
+}
+
+func TestInsertFinalNewline(t *testing.T) {
+	tests := []struct {
+		Name               string
+		InsertFinalNewline bool
+		File               []byte
+	}{
+		{
+			Name:               "has final newline",
+			InsertFinalNewline: true,
+			File: []byte(`A file
+with a final newline.
+`),
+		}, {
+			Name:               "has newline",
+			InsertFinalNewline: false,
+			File: []byte(`A file
+without a final newline.`),
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+
+		// Test the nominal case
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			def := &editorconfig.Definition{
+				InsertFinalNewline: &tc.InsertFinalNewline,
+			}
+
+			r := bytes.NewReader(tc.File)
+			if err := validate(r, l, def); err != nil {
+				t.Errorf("No errors where expected, got %s", err)
+			}
+		})
+
+		// Test the inverse
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			insertFinalNewline := !tc.InsertFinalNewline
+			def := &editorconfig.Definition{
+				InsertFinalNewline: &insertFinalNewline,
+			}
+
+			r := bytes.NewReader(tc.File)
+
+			if err := validate(r, l, def); err == nil {
 				t.Error("An error was expected")
 			}
 		})

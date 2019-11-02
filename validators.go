@@ -1,10 +1,84 @@
 package main
 
 import (
+	"bytes"
 	"fmt"
+	"io"
+	"strconv"
 
+	"github.com/editorconfig/editorconfig-core-go/v2"
+	"github.com/go-logr/logr"
 	"github.com/gogs/chardet"
 )
+
+// validate is where the validations rules are applied
+func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error {
+	var buf *bytes.Buffer
+	if def.Charset != "" {
+		buf = bytes.NewBuffer(make([]byte, 0))
+	}
+
+	indentSize, _ := strconv.Atoi(def.IndentSize)
+
+	var lastLine []byte
+	err := readLines(r, func(index int, data []byte) error {
+		var err error
+
+		// The last line may not have the expected ending.
+		if lastLine != nil && def.EndOfLine != "" {
+			err = endOfLine(def.EndOfLine, lastLine)
+		}
+
+		lastLine = data
+
+		if buf != nil {
+			if _, err := buf.Write(data); err != nil {
+				log.Error(err, "cannot write into file buffer", "line", index)
+			}
+		}
+
+		if err == nil && def.IndentStyle != "" {
+			err = indentStyle(def.IndentStyle, indentSize, data)
+		}
+
+		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
+			err = trimTrailingWhitespace(data)
+		}
+
+		if err != nil {
+			return fmt.Errorf("line %d: %s", index, err)
+		}
+
+		return nil
+	})
+
+	if err == nil && buf != nil && buf.Len() > 0 {
+		err = charset(def.Charset, buf.Bytes())
+	}
+
+	if err == nil && lastLine != nil && def.InsertFinalNewline != nil {
+		var lastChar byte
+		if len(lastLine) > 0 {
+			lastChar = lastLine[len(lastLine)-1]
+		}
+
+		if lastChar != 0x0 && lastChar != '\r' && lastChar != '\n' {
+			if *def.InsertFinalNewline {
+				err = fmt.Errorf("missing the final newline")
+			}
+		} else {
+			if def.EndOfLine != "" {
+				err = endOfLine(def.EndOfLine, lastLine)
+			}
+
+			if err == nil && !*def.InsertFinalNewline {
+				err = fmt.Errorf("found an extraneous final newline")
+			}
+		}
+	}
+
+	return err
+}
 
 // endOfLines checks the line ending
 func endOfLine(eol string, data []byte) error {

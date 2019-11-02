@@ -1,12 +1,10 @@
 package main
 
 import (
-	"bytes"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
-	"strconv"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
@@ -57,46 +55,9 @@ func lint(filename string) error {
 	if err != nil {
 		return err
 	}
+	defer fp.Close()
 
-	var buf *bytes.Buffer
-	if err == nil && def.Charset != "" {
-		buf = bytes.NewBuffer(make([]byte, 0))
-	}
-
-	indentSize, _ := strconv.Atoi(def.IndentSize)
-
-	err = readLines(fp, func(index int, data []byte) error {
-		var err error
-
-		if buf != nil {
-			if _, err := buf.Write(data); err != nil {
-				log.Error(err, "cannot write into file buffer", "line", index)
-			}
-		}
-
-		if def.EndOfLine != "" {
-			err = endOfLine(def.EndOfLine, data)
-		}
-
-		if err == nil && def.IndentStyle != "" {
-			err = indentStyle(def.IndentStyle, indentSize, data)
-		}
-
-		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
-			err = trimTrailingWhitespace(data)
-		}
-
-		if err != nil {
-			return fmt.Errorf("line %d: %s", index, err)
-		}
-		return nil
-	})
-
-	if err == nil && buf != nil && buf.Len() > 0 {
-		err = charset(def.Charset, buf.Bytes())
-	}
-
-	return err
+	return validate(fp, log, def)
 }
 
 func main() {

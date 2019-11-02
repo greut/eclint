@@ -12,7 +12,8 @@ type lineFunc func(int, []byte) error
 
 // splitLines works like bufio.ScanLines while keeping the line endings.
 func splitLines(data []byte, atEOF bool) (int, []byte, error) {
-	for i := 0; i < len(data); {
+	i := 0
+	for i < len(data) {
 		if data[i] == '\r' {
 			i++
 			if data[i] == '\n' {
@@ -25,10 +26,16 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 		}
 		i++
 	}
+
 	if !atEOF {
 		return 0, nil, nil
 	}
-	return len(data) + 1, data, nil
+
+	if atEOF && i != 0 {
+		return 0, data, bufio.ErrFinalToken
+	}
+
+	return 0, nil, io.EOF
 }
 
 func readLines(r io.Reader, fn lineFunc) error {
