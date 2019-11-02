@@ -2,6 +2,8 @@ package main
 
 import (
 	"fmt"
+
+	"github.com/gogs/chardet"
 )
 
 // endOfLines checks the line ending
@@ -30,21 +32,44 @@ func endOfLine(eol string, data []byte) error {
 	return nil
 }
 
-// charset checks the line encoding
+// charset checks the file encoding
 func charset(charset string, data []byte) error {
-	switch charset {
-	case "latin1":
-		log.V(1).Info("not implemented", "charset", charset)
-	case "utf-16be":
-		log.V(1).Info("not implemented", "charset", charset)
-	case "utf-16le":
-		log.V(1).Info("not implemented", "charset", charset)
-	case "utf-8":
-		log.V(1).Info("not implemented", "charset", charset)
-	case "utf-8 bom":
-		log.V(1).Info("not implemented", "charset", charset)
-	default:
-		return fmt.Errorf("%q is an invalid value of charset, want latin1 or some utf variants", charset)
+	d := chardet.NewTextDetector()
+	results, err := d.DetectAll(data)
+	if err != nil {
+		return fmt.Errorf("charset detection failure %s", err)
+	}
+
+	for _, result := range results {
+		log.V(4).Info("Charset", "result", result.Charset, "confidence", result.Confidence, "want", charset)
+		switch charset {
+		case "utf-8":
+			if result.Charset == "UTF-8" {
+				return nil
+			}
+		case "utf-8 bom":
+			if result.Charset == "UTF-8" {
+				return nil
+			}
+		case "utf-16be":
+			if result.Charset == "UTF-16BE" {
+				return nil
+			}
+		case "utf-16le":
+			if result.Charset == "UTF-16LE" {
+				return nil
+			}
+		case "latin1":
+			if result.Charset == "ISO-8859-1" {
+				return nil
+			}
+		default:
+			return fmt.Errorf("%q is an invalid value for charset", charset)
+		}
+	}
+
+	if len(results) > 0 {
+		return fmt.Errorf("detected charset %q does not match expected %q", results[0].Charset, charset)
 	}
 
 	return nil

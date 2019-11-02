@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
@@ -56,8 +57,19 @@ func lint(filename string) error {
 		return err
 	}
 
+	var buf *bytes.Buffer
+	if err == nil && def.Charset != "" {
+		buf = bytes.NewBuffer(make([]byte, 0))
+	}
+
 	err = readLines(fp, func(index int, data []byte) error {
 		var err error
+
+		if buf != nil {
+			if _, err := buf.Write(data); err != nil {
+				log.Error(err, "cannot write into file buffer", "line", index)
+			}
+		}
 
 		if def.EndOfLine != "" {
 			err = endOfLine(def.EndOfLine, data)
@@ -65,10 +77,6 @@ func lint(filename string) error {
 
 		if err == nil && def.IndentStyle != "" {
 			err = indentStyle(def.IndentStyle, data)
-		}
-
-		if err == nil && def.Charset != "" {
-			err = charset(def.Charset, data)
 		}
 
 		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
@@ -80,6 +88,10 @@ func lint(filename string) error {
 		}
 		return nil
 	})
+
+	if err == nil && buf != nil && buf.Len() > 0 {
+		err = charset(def.Charset, buf.Bytes())
+	}
 
 	return err
 }
@@ -118,7 +130,7 @@ func main() {
 		err := lint(filename)
 		if err != nil {
 			log.V(4).Info("lint error", "filename", filename, "error", err)
-			fmt.Printf("filename %s: %s", filename, err)
+			fmt.Printf("%s: %s\n", filename, err)
 			c++
 		}
 	}
