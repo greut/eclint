@@ -71,3 +71,17 @@ func indentStyle(style string, data []byte) error {
 
 	return nil
 }
+
+// trimTrailingWhitespace
+func trimTrailingWhitespace(data []byte) error {
+	for i := len(data) - 1; i >= 0; i-- {
+		if data[i] == '\r' || data[i] == '\n' {
+			continue
+		}
+		if data[i] == ' ' || data[i] == '\t' {
+			return fmt.Errorf("pos %d: looks like a trailing whitespace", i)
+		}
+		break
+	}
+	return nil
+}

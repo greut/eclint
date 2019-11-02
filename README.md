@@ -14,12 +14,13 @@ $ eclint -version
 
 - `end_of_line`
 - `indent_style`
-- `time_trailing_white_space`
+- `trim_trailing_whitespace`
 
 ## Missing features
 
 - `charset`
-- `indent_style`
+- `indent_size`
+- `insert_final_newline`
 - tests
 - ignoring `.git`, `vendor`, etc.
 - etc.

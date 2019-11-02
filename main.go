@@ -43,7 +43,7 @@ func lint(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Cannot open file %s. %w", filename, err)
 	}
-	log.Printf("[INFO] lint %s", filename)
+	log.Printf("[INFO ] lint %s", filename)
 
 	fp, err := os.Open(filename)
 	if err != nil {
@@ -63,6 +63,10 @@ func lint(filename string) error {
 
 		if err == nil && def.Charset != "" {
 			err = charset(def.Charset, data)
+		}
+
+		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
+			err = trimTrailingWhitespace(data)
 		}
 
 		if err != nil {
@@ -98,7 +102,7 @@ func main() {
 		os.Exit(1)
 		return
 	}
-	log.Printf("[INFO] %d files found", len(files))
+	log.Printf("[INFO ] %d files found", len(files))
 
 	c := 0
 	for _, file := range files {
