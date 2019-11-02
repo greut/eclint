@@ -76,7 +76,7 @@ func charset(charset string, data []byte) error {
 }
 
 // indentStyle checks that the line beginnings are either space or tabs
-func indentStyle(style string, data []byte) error {
+func indentStyle(style string, size int, data []byte) error {
 	var c byte
 	var x byte
 	switch style {
@@ -86,6 +86,7 @@ func indentStyle(style string, data []byte) error {
 	case "tab":
 		c = '\t'
 		x = ' '
+		size = 1
 	default:
 		return fmt.Errorf("%q is an invalid value of indent_style, want tab or space", style)
 	}
@@ -97,7 +98,10 @@ func indentStyle(style string, data []byte) error {
 		if data[i] == x {
 			return fmt.Errorf("pos %d: indentation style mismatch expected %s", i, style)
 		}
-		break
+		if data[i] == '\r' || data[i] == '\n' || i%size == 0 {
+			break
+		}
+		return fmt.Errorf("pos %d: indentation size doesn't match expected %d, got %d", i, size, i)
 	}
 
 	return nil

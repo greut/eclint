@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strconv"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
@@ -62,6 +63,8 @@ func lint(filename string) error {
 		buf = bytes.NewBuffer(make([]byte, 0))
 	}
 
+	indentSize, _ := strconv.Atoi(def.IndentSize)
+
 	err = readLines(fp, func(index int, data []byte) error {
 		var err error
 
@@ -76,7 +79,7 @@ func lint(filename string) error {
 		}
 
 		if err == nil && def.IndentStyle != "" {
-			err = indentStyle(def.IndentStyle, data)
+			err = indentStyle(def.IndentStyle, indentSize, data)
 		}
 
 		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
