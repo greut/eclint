@@ -1,6 +1,8 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+)
 
 // endOfLines checks the line ending
 func endOfLine(eol string, data []byte) error {
@@ -32,11 +34,15 @@ func endOfLine(eol string, data []byte) error {
 func charset(charset string, data []byte) error {
 	switch charset {
 	case "latin1":
+		log.V(1).Info("not implemented", "charset", charset)
 	case "utf-16be":
+		log.V(1).Info("not implemented", "charset", charset)
 	case "utf-16le":
+		log.V(1).Info("not implemented", "charset", charset)
 	case "utf-8":
+		log.V(1).Info("not implemented", "charset", charset)
 	case "utf-8 bom":
-		// Not implemented
+		log.V(1).Info("not implemented", "charset", charset)
 	default:
 		return fmt.Errorf("%q is an invalid value of charset, want latin1 or some utf variants", charset)
 	}

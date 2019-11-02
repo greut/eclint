@@ -3,24 +3,30 @@ package main
 import (
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"path/filepath"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
+	"github.com/go-logr/logr"
+	"k8s.io/klog/v2"
+	"k8s.io/klog/v2/klogr"
 )
 
 var (
 	version = "dev"
+	log     logr.Logger
 )
 
 func walk(paths ...string) ([]string, error) {
 	files := make([]string, 0)
 	for _, path := range paths {
 		err := filepath.Walk(path, func(p string, i os.FileInfo, e error) error {
+			if e != nil {
+				return e
+			}
 			mode := i.Mode()
 			if mode.IsRegular() && !mode.IsDir() {
-				log.Printf("[DEBUG] index %s\n", p)
+				log.V(4).Info("index %s\n", p)
 				abs, err := filepath.Abs(p)
 				if err != nil {
 					return err
@@ -43,7 +49,7 @@ func lint(filename string) error {
 	if err != nil {
 		return fmt.Errorf("Cannot open file %s. %w", filename, err)
 	}
-	log.Printf("[INFO ] lint %s", filename)
+	log.V(1).Info("lint", "filename", filename)
 
 	fp, err := os.Open(filename)
 	if err != nil {
@@ -81,6 +87,8 @@ func lint(filename string) error {
 func main() {
 	var flagVersion bool
 
+	klog.InitFlags(nil)
+
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.Parse()
 
@@ -89,26 +97,28 @@ func main() {
 		return
 	}
 
+	log = klogr.New()
+
 	args := flag.Args()
 	if len(args) == 0 {
 		args = append(args, ".")
 	}
 
-	log.SetFlags(0)
-
 	files, err := walk(args...)
 	if err != nil {
-		log.Printf("[ERROR] %v", err)
+		log.Error(err, "error while handling the arguments")
+		flag.Usage()
 		os.Exit(1)
 		return
 	}
-	log.Printf("[INFO ] %d files found", len(files))
+	log.V(1).Info("files", "count", len(files))
 
 	c := 0
-	for _, file := range files {
-		err := lint(file)
+	for _, filename := range files {
+		err := lint(filename)
 		if err != nil {
-			log.Printf("[ERROR] %v", err)
+			log.V(4).Info("lint error", "filename", filename, "error", err)
+			fmt.Printf("filename %s: %s", filename, err)
 			c++
 		}
 	}
