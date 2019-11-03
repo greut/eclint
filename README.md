@@ -23,7 +23,8 @@ $ eclint -version
 
 ## Missing features
 
-- `utf-8 bom`
+- doing checks on `rune` rather than `byte`
+- `utf-32` tests
 - [domain-specific properties](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties)
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`

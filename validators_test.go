@@ -2,7 +2,9 @@ package main
 
 import (
 	"bytes"
+	"encoding/binary"
 	"testing"
+	"unicode/utf16"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	tlogr "github.com/go-logr/logr/testing"
@@ -134,6 +136,7 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 			Line: []byte("\t"),
 		},
 	}
+
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
@@ -141,6 +144,68 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 			err := trimTrailingWhitespace(tc.Line)
 			if err == nil {
 				t.Error("An error was expected")
+			}
+		})
+	}
+}
+
+func utf16le(s string) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})
+	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s)))
+	return buf.Bytes()
+}
+
+func utf16be(s string) []byte {
+	buf := new(bytes.Buffer)
+	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})
+	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s)))
+	return buf.Bytes()
+}
+
+func TestCharset(t *testing.T) {
+	tests := []struct {
+		Name    string
+		Charset string
+		File    []byte
+	}{
+		{
+			Name:    "utf-8",
+			Charset: "utf-8",
+			File:    []byte("Hello world."),
+		}, {
+			Name:    "utf-8 bom",
+			Charset: "utf-8 bom",
+			File:    []byte{0xef, 0xbb, 0xbf, 'h', 'e', 'l', 'l', 'o', '.'},
+		}, {
+			Name:    "latin1",
+			Charset: "latin1",
+			File:    []byte("Hello world."),
+		}, {
+			Name:    "utf-16le",
+			Charset: "utf-16le",
+			File:    utf16le("Hello world."),
+		}, {
+			Name:    "utf-16be",
+			Charset: "utf-16be",
+			File:    utf16be("Hello world."),
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			//t.Parallel()
+
+			def := &editorconfig.Definition{
+				Charset: tc.Charset,
+			}
+
+			r := bytes.NewReader(tc.File)
+			if err := validate(r, l, def); err != nil {
+				t.Errorf("No errors where expected, got %s", err)
 			}
 		})
 	}

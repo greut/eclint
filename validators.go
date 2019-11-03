@@ -14,6 +14,8 @@ import (
 // validate is where the validations rules are applied
 func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error {
 	var buf *bytes.Buffer
+	// chardet uses a 8192 bytebuf for detection
+	bufSize := 8192
 	if def.Charset != "" {
 		buf = bytes.NewBuffer(make([]byte, 0))
 	}
@@ -31,7 +33,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 
 		lastLine = data
 
-		if buf != nil {
+		if buf != nil && buf.Len() < bufSize {
 			if _, err := buf.Write(data); err != nil {
 				log.Error(err, "cannot write into file buffer", "line", index)
 			}
@@ -115,14 +117,13 @@ func charset(charset string, data []byte) error {
 	}
 
 	for _, result := range results {
-		log.V(4).Info("Charset", "result", result.Charset, "confidence", result.Confidence, "want", charset)
 		switch charset {
 		case "utf-8":
 			if result.Charset == "UTF-8" {
 				return nil
 			}
 		case "utf-8 bom":
-			if result.Charset == "UTF-8" {
+			if result.Charset == "UTF-8" && len(data) > 2 && data[0] == 0xef && data[1] == 0xbb && data[2] == 0xbf {
 				return nil
 			}
 		case "utf-16be":
