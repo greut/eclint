@@ -16,15 +16,24 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 	var buf *bytes.Buffer
 	// chardet uses a 8192 bytebuf for detection
 	bufSize := 8192
-	if def.Charset != "" {
-		buf = bytes.NewBuffer(make([]byte, 0))
-	}
 
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
 	var lastLine []byte
 	err := readLines(r, func(index int, data []byte) error {
 		var err error
+
+		// The first line may contain the BOM for detecting some encodings
+		if index == 0 && def.Charset != "" {
+			ok, err := charsetUsingBOM(def.Charset, data)
+			if err != nil {
+				return err
+			}
+
+			if !ok {
+				buf = bytes.NewBuffer(make([]byte, 0))
+			}
+		}
 
 		// The last line may not have the expected ending.
 		if lastLine != nil && def.EndOfLine != "" {
@@ -84,21 +93,17 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 
 // endOfLines checks the line ending
 func endOfLine(eol string, data []byte) error {
-	l := len(data)
 	switch eol {
 	case "lf":
-		if l > 0 && data[l-1] != '\n' {
+		if !bytes.HasSuffix(data, []byte{'\n'}) || bytes.HasSuffix(data, []byte{'\r', '\n'}) {
 			return fmt.Errorf("line does not end with lf (`\\n`)")
 		}
-		if l > 1 && data[l-2] == '\r' {
-			return fmt.Errorf("line should not end with crlf (`\\r\\n`)")
-		}
 	case "crlf":
-		if (l > 0 && data[l-1] != '\n') || l == 1 || (l > 1 && data[l-2] != '\r') {
+		if !bytes.HasSuffix(data, []byte{'\r', '\n'}) {
 			return fmt.Errorf("line does not end with crlf (`\\r\\n`)")
 		}
 	case "cr":
-		if l > 0 && data[l-1] != '\r' {
+		if !bytes.HasSuffix(data, []byte{'\r'}) {
 			return fmt.Errorf("line does not end with cr (`\\r`)")
 		}
 	default:
@@ -106,6 +111,35 @@ func endOfLine(eol string, data []byte) error {
 	}
 
 	return nil
+}
+
+// charsetUsingBOM checks the charset via the first bytes of the first line
+func charsetUsingBOM(charset string, data []byte) (bool, error) {
+	switch charset {
+	case "utf-8 bom":
+		if !bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
+			return false, fmt.Errorf("no UTF-8 BOM were found")
+		}
+	case "utf-16le":
+		if !bytes.HasPrefix(data, []byte{0xff, 0xfe}) {
+			return false, fmt.Errorf("no UTF-16LE BOM were found")
+		}
+	case "utf-16be":
+		if !bytes.HasPrefix(data, []byte{0xfe, 0xff}) {
+			return false, fmt.Errorf("no UTF-16BE BOM were found")
+		}
+	case "utf-32le":
+		if !bytes.HasPrefix(data, []byte{0xff, 0xfe, 0, 0}) {
+			return false, fmt.Errorf("no UTF-32LE BOM were found")
+		}
+	case "utf-32be":
+		if !bytes.HasPrefix(data, []byte{0, 0, 0xfe, 0xff}) {
+			return false, fmt.Errorf("no UTF-32BE BOM were found")
+		}
+	default:
+		return false, nil
+	}
+	return true, nil
 }
 
 // charset checks the file encoding

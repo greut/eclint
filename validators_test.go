@@ -189,6 +189,14 @@ func TestCharset(t *testing.T) {
 			Name:    "utf-16be",
 			Charset: "utf-16be",
 			File:    utf16be("Hello world."),
+		}, {
+			Name:    "utf-32le",
+			Charset: "utf-32le",
+			File:    []byte{0xff, 0xfe, 0, 0, 'h', 0, 0, 0},
+		}, {
+			Name:    "utf-32be",
+			Charset: "utf-32be",
+			File:    []byte{0, 0, 0xfe, 0xff, 0, 0, 0, 'h'},
 		},
 	}
 
