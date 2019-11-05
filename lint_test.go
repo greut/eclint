@@ -168,7 +168,7 @@ func TestLintMissing(t *testing.T) {
 func TestLintInvalid(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, err := range lint("testdata/invalid/file", l) {
+	for _, err := range lint("testdata/invalid/.editorconfig", l) {
 		if err == nil {
 			t.Error("an error was expected")
 		}

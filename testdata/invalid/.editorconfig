@@ -1,3 +1,4 @@
 root = true
 
-[{*.py]
+[{.editorconfig,.}]
+charset="utf-8 bom"
