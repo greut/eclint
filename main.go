@@ -42,18 +42,18 @@ func walk(paths ...string) ([]string, error) {
 	return files, nil
 }
 
-func lint(filename string) error {
+func lint(filename string) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
 	if err != nil {
-		return fmt.Errorf("Cannot open file %s. %w", filename, err)
+		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
 	}
 	log.V(1).Info("lint", "filename", filename)
 
 	fp, err := os.Open(filename)
 	if err != nil {
-		return err
+		return []error{err}
 	}
 	defer fp.Close()
 
@@ -76,29 +76,46 @@ func main() {
 	log = klogr.New()
 
 	args := flag.Args()
+	var files []string
 	if len(args) == 0 {
-		args = append(args, ".")
+		fs, err := gitLsFiles()
+		if err != nil {
+			args = append(args, ".")
+
+			fs, err := walk(args...)
+			if err != nil {
+				log.Error(err, "error while handling the arguments")
+				flag.Usage()
+				os.Exit(1)
+				return
+			}
+
+			files = fs
+		} else {
+			files = fs
+		}
 	}
 
-	files, err := walk(args...)
-	if err != nil {
-		log.Error(err, "error while handling the arguments")
-		flag.Usage()
-		os.Exit(1)
-		return
-	}
 	log.V(1).Info("files", "count", len(files))
 
 	c := 0
 	for _, filename := range files {
-		err := lint(filename)
-		if err != nil {
-			log.V(4).Info("lint error", "filename", filename, "error", err)
-			fmt.Printf("%s: %s\n", filename, err)
-			c++
+		d := 0
+		errs := lint(filename)
+		for _, err := range errs {
+			if err != nil {
+				log.V(4).Info("lint error", "filename", filename, "error", err)
+				if d == 0 {
+					fmt.Printf("%s:\n", filename)
+				}
+				fmt.Printf("\t%s\n", err)
+				d++
+				c++
+			}
 		}
 	}
 	if c > 0 {
+		log.V(1).Info("Some errors were found.", "count", c)
 		os.Exit(1)
 	}
 }

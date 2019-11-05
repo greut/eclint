@@ -36,7 +36,7 @@ func TestEndOfLine(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
 			if err != nil {
-				t.Errorf("No errors where expected, got %s", err)
+				t.Errorf("no errors where expected, got %s", err)
 			}
 		})
 	}
@@ -80,7 +80,7 @@ func TestEndOfLineFailures(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
 			if err == nil {
-				t.Error("An error was expected")
+				t.Error("an error was expected")
 			}
 		})
 	}
@@ -117,7 +117,7 @@ func TestTrimTrailingWhitespace(t *testing.T) {
 			t.Parallel()
 			err := trimTrailingWhitespace(tc.Line)
 			if err != nil {
-				t.Errorf("No errors where expected, got %s", err)
+				t.Errorf("no errors where expected, got %s", err)
 			}
 		})
 	}
@@ -143,7 +143,7 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 			t.Parallel()
 			err := trimTrailingWhitespace(tc.Line)
 			if err == nil {
-				t.Error("An error was expected")
+				t.Error("an error was expected")
 			}
 		})
 	}
@@ -151,15 +151,15 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 
 func utf16le(s string) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})
-	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s)))
+	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})        // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s))) // nolint: errcheck
 	return buf.Bytes()
 }
 
 func utf16be(s string) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})
-	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s)))
+	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})        // nolint: errcheck
+	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s))) // nolint: errcheck
 	return buf.Bytes()
 }
 
@@ -212,8 +212,10 @@ func TestCharset(t *testing.T) {
 			}
 
 			r := bytes.NewReader(tc.File)
-			if err := validate(r, l, def); err != nil {
-				t.Errorf("No errors where expected, got %s", err)
+			for _, err := range validate(r, l, def) {
+				if err != nil {
+					t.Errorf("no errors where expected, got %s", err)
+				}
 			}
 		})
 	}
@@ -253,8 +255,10 @@ without a final newline.`),
 			}
 
 			r := bytes.NewReader(tc.File)
-			if err := validate(r, l, def); err != nil {
-				t.Errorf("No errors where expected, got %s", err)
+			for _, err := range validate(r, l, def) {
+				if err != nil {
+					t.Errorf("no errors where expected, got %s", err)
+				}
 			}
 		})
 
@@ -269,8 +273,92 @@ without a final newline.`),
 
 			r := bytes.NewReader(tc.File)
 
-			if err := validate(r, l, def); err == nil {
-				t.Error("An error was expected")
+			for _, err := range validate(r, l, def) {
+				if err == nil {
+					t.Error("an error was expected")
+				}
+			}
+		})
+	}
+}
+
+func TestIndentStyle(t *testing.T) {
+	tests := []struct {
+		Name        string
+		IndentSize  int
+		IndentStyle string
+		Line        []byte
+	}{
+		{
+			Name:        "empty line of tab",
+			IndentSize:  1,
+			IndentStyle: "tab",
+			Line:        []byte("\t\t\t\t."),
+		}, {
+			Name:        "empty line of spaces",
+			IndentSize:  1,
+			IndentStyle: "space",
+			Line:        []byte("      ."),
+		}, {
+			Name:        "three spaces",
+			IndentSize:  3,
+			IndentStyle: "space",
+			Line:        []byte("            ."),
+		}, {
+			Name:        "three tabs",
+			IndentSize:  3,
+			IndentStyle: "tab",
+			Line:        []byte("\t\t\t\t."),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := indentStyle(tc.IndentStyle, tc.IndentSize, tc.Line)
+			if err != nil {
+				t.Errorf("no errors where expected, got %s", err)
+			}
+		})
+	}
+}
+
+func TestIndentStyleFailure(t *testing.T) {
+	tests := []struct {
+		Name        string
+		IndentSize  int
+		IndentStyle string
+		Line        []byte
+	}{
+		{
+			Name:        "mix of tab and spaces",
+			IndentSize:  2,
+			IndentStyle: "space",
+			Line:        []byte("  \t."),
+		}, {
+			Name:        "mix of tabs and space spaces",
+			IndentSize:  2,
+			IndentStyle: "tab",
+			Line:        []byte("\t \t."),
+		}, {
+			Name:        "three spaces +1",
+			IndentSize:  3,
+			IndentStyle: "space",
+			Line:        []byte("    ."),
+		}, {
+			Name:        "three spaces -1",
+			IndentSize:  3,
+			IndentStyle: "space",
+			Line:        []byte("  ."),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := indentStyle(tc.IndentStyle, tc.IndentSize, tc.Line)
+			if err == nil {
+				t.Error("an error was expected")
 			}
 		})
 	}

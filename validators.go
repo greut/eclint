@@ -12,7 +12,7 @@ import (
 )
 
 // validate is where the validations rules are applied
-func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error {
+func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error {
 	var buf *bytes.Buffer
 	// chardet uses a 8192 bytebuf for detection
 	bufSize := 8192
@@ -20,7 +20,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
 	var lastLine []byte
-	err := readLines(r, func(index int, data []byte) error {
+	errs := readLines(r, func(index int, data []byte) error {
 		var err error
 
 		// The first line may contain the BOM for detecting some encodings
@@ -63,11 +63,12 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 		return nil
 	})
 
-	if err == nil && buf != nil && buf.Len() > 0 {
-		err = charset(def.Charset, buf.Bytes())
+	if buf != nil && buf.Len() > 0 {
+		err := charset(def.Charset, buf.Bytes())
+		errs = append(errs, err)
 	}
 
-	if err == nil && lastLine != nil && def.InsertFinalNewline != nil {
+	if lastLine != nil && def.InsertFinalNewline != nil {
 		var lastChar byte
 		if len(lastLine) > 0 {
 			lastChar = lastLine[len(lastLine)-1]
@@ -75,20 +76,23 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) error 
 
 		if lastChar != 0x0 && lastChar != '\r' && lastChar != '\n' {
 			if *def.InsertFinalNewline {
-				err = fmt.Errorf("missing the final newline")
+				err := fmt.Errorf("missing the final newline")
+				errs = append(errs, err)
 			}
 		} else {
 			if def.EndOfLine != "" {
-				err = endOfLine(def.EndOfLine, lastLine)
+				err := endOfLine(def.EndOfLine, lastLine)
+				errs = append(errs, err)
 			}
 
-			if err == nil && !*def.InsertFinalNewline {
-				err = fmt.Errorf("found an extraneous final newline")
+			if !*def.InsertFinalNewline {
+				err := fmt.Errorf("found an extraneous final newline")
+				errs = append(errs, err)
 			}
 		}
 	}
 
-	return err
+	return errs
 }
 
 // endOfLines checks the line ending
@@ -207,7 +211,7 @@ func indentStyle(style string, size int, data []byte) error {
 		if data[i] == x {
 			return fmt.Errorf("pos %d: indentation style mismatch expected %s", i, style)
 		}
-		if data[i] == '\r' || data[i] == '\n' || i%size == 0 {
+		if data[i] == '\r' || data[i] == '\n' || (size > 0 && i%size == 0) {
 			break
 		}
 		return fmt.Errorf("pos %d: indentation size doesn't match expected %d, got %d", i, size, i)

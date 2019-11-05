@@ -20,23 +20,31 @@ $ eclint -version
 - `indent_style`
 - `insert_final_newline`
 - `trim_trailing_whitespace`
+- when not path is given, it searches for files via `git ls-files`
 
 ## Missing features
 
 - doing checks on `rune` rather than `byte`
-- `utf-32` tests
 - [domain-specific properties](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties)
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`
 - more tests
 - ability to fix
-- ignoring `.git`, `vendor`, etc. (via `git ls-files`)
 - docker image
 - etc.
 
 ## Benchmarks
 
-*TODO*
+**NB** benchmarks matter at feature parity (which is also hard to measure).
+
+The contenders are the following.
+
+- [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker), also in Go.
+
+The methodology is to run the linter against some big repositories such as:
+
+- Rosylin
+- SaltStack
 
 ## Libraries
 

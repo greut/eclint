@@ -16,7 +16,7 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 	for i < len(data) {
 		if data[i] == '\r' {
 			i++
-			if data[i] == '\n' {
+			if i < len(data) && data[i] == '\n' {
 				i++
 			}
 			return i, data[0:i], nil
@@ -38,7 +38,8 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 	return 0, nil, io.EOF
 }
 
-func readLines(r io.Reader, fn lineFunc) error {
+func readLines(r io.Reader, fn lineFunc) []error {
+	errs := make([]error, 0)
 	sc := bufio.NewScanner(r)
 	sc.Split(splitLines)
 
@@ -46,10 +47,10 @@ func readLines(r io.Reader, fn lineFunc) error {
 	for sc.Scan() {
 		line := sc.Bytes()
 		if err := fn(i, line); err != nil {
-			return err
+			errs = append(errs, err)
 		}
 		i++
 	}
 
-	return nil
+	return errs
 }
