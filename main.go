@@ -82,7 +82,7 @@ func main() {
 	c := 0
 	for _, filename := range files {
 		d := 0
-		errs := lint(filename)
+		errs := lint(filename, log)
 		for _, err := range errs {
 			if err != nil {
 				log.V(4).Info("lint error", "filename", filename, "error", err)

@@ -142,3 +142,37 @@ without a final newline.`),
 		})
 	}
 }
+
+func TestLintSimple(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, err := range lint("testdata/simple/simple.txt", l) {
+		if err != nil {
+			t.Errorf("no errors where expected, got %s", err)
+		}
+	}
+}
+
+func TestLintMissing(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, err := range lint("testdata/missing/file", l) {
+		if err == nil {
+			t.Error("an error was expected")
+		}
+		return
+	}
+	t.Error("an error was expected, got none")
+}
+
+func TestLintInvalid(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, err := range lint("testdata/invalid/file", l) {
+		if err == nil {
+			t.Error("an error was expected")
+		}
+		return
+	}
+	t.Error("an error was expected, got none")
+}

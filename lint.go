@@ -95,7 +95,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	return errs
 }
 
-func lint(filename string) []error {
+func lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
