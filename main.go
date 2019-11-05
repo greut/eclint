@@ -6,7 +6,6 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
@@ -40,24 +39,6 @@ func walk(paths ...string) ([]string, error) {
 		}
 	}
 	return files, nil
-}
-
-func lint(filename string) []error {
-	// XXX editorconfig should be able to treat a flux of
-	// filenames with caching capabilities.
-	def, err := editorconfig.GetDefinitionForFilename(filename)
-	if err != nil {
-		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
-	}
-	log.V(1).Info("lint", "filename", filename)
-
-	fp, err := os.Open(filename)
-	if err != nil {
-		return []error{err}
-	}
-	defer fp.Close()
-
-	return validate(fp, log, def)
 }
 
 func main() {
