@@ -59,7 +59,7 @@ func main() {
 	args := flag.Args()
 	var files []string
 	if len(args) == 0 {
-		fs, err := gitLsFiles()
+		fs, err := gitLsFiles(".")
 		if err != nil {
 			args = append(args, ".")
 

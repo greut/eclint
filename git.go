@@ -5,8 +5,8 @@ import (
 	"strings"
 )
 
-func gitLsFiles() ([]string, error) {
-	lines, err := exec.Command("git", "ls-files").Output()
+func gitLsFiles(path string) ([]string, error) {
+	lines, err := exec.Command("git", "ls-files", path).Output()
 	if err != nil {
 		return nil, err
 	}
