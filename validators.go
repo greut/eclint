@@ -72,24 +72,12 @@ func charset(charset string, data []byte) error {
 			if result.Charset == "UTF-8" {
 				return nil
 			}
-		case "utf-8 bom":
-			if result.Charset == "UTF-8" && len(data) > 2 && data[0] == 0xef && data[1] == 0xbb && data[2] == 0xbf {
-				return nil
-			}
-		case "utf-16be":
-			if result.Charset == "UTF-16BE" {
-				return nil
-			}
-		case "utf-16le":
-			if result.Charset == "UTF-16LE" {
-				return nil
-			}
 		case "latin1":
 			if result.Charset == "ISO-8859-1" {
 				return nil
 			}
 		default:
-			return fmt.Errorf("%q is an invalid value for charset", charset)
+			return fmt.Errorf("%q is an invalid value for charset or should have been detected using its BOM already", charset)
 		}
 	}
 

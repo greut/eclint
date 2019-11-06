@@ -29,6 +29,7 @@ $ eclint -version
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`
 - more tests
+- colored output _à la_ ripgrep
 - ability to fix
 - docker image
 - etc.
