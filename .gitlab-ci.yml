@@ -2,9 +2,19 @@ image: golang:1.13
 
 stages:
   - test
+  - lint
 
 go test:
   stage: test
   script:
     - go test -v
       -cover -covermode atomic
+    - go build .
+  artifacts:
+    paths:
+      - eclint
+
+eclint:
+  stage: lint
+  script:
+    - ./eclint -exclude "testdata/**/*"

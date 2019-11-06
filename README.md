@@ -12,6 +12,12 @@ $ go install gitlab.com/greut/eclint
 $ eclint -version
 ```
 
+Excluding some files using the EditorConfig matcher
+
+```
+$ eclint -exclude "testdata/**/*"
+```
+
 ## Features
 
 - `charset`
@@ -21,6 +27,7 @@ $ eclint -version
 - `insert_final_newline`
 - `trim_trailing_whitespace`
 - when not path is given, it searches for files via `git ls-files`
+- `-exclude` to filter out some files
 
 ## Missing features
 
@@ -44,7 +51,7 @@ The contenders are the following.
 
 The methodology is to run the linter against some big repositories such as:
 
-- Rosylin
+- Roslyn
 - SaltStack
 
 ## Libraries

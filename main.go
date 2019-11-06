@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
@@ -26,11 +27,11 @@ func walk(paths ...string) ([]string, error) {
 			mode := i.Mode()
 			if mode.IsRegular() && !mode.IsDir() {
 				log.V(4).Info("index %s\n", p)
-				abs, err := filepath.Abs(p)
+				_, err := filepath.Abs(p)
 				if err != nil {
 					return err
 				}
-				files = append(files, abs)
+				files = append(files, p)
 			}
 			return nil
 		})
@@ -44,9 +45,11 @@ func walk(paths ...string) ([]string, error) {
 func main() {
 	var flagVersion bool
 
-	klog.InitFlags(nil)
+	exclude := ""
 
+	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
+	flag.StringVar(&exclude, "exclude", "", "paths to exclude")
 	flag.Parse()
 
 	if flagVersion {
@@ -77,10 +80,24 @@ func main() {
 		}
 	}
 
-	log.V(1).Info("files", "count", len(files))
+	log.V(1).Info("files", "count", len(files), "exclude", exclude)
 
 	c := 0
 	for _, filename := range files {
+		// Skip excluded files
+		if exclude != "" {
+			ok, err := editorconfig.FnmatchCase(exclude, filename)
+			if err != nil {
+				log.Error(err, "exclude pattern failure", "exclude", exclude)
+				fmt.Printf("exclude pattern failure %s", err)
+				c++
+				break
+			}
+			if ok {
+				continue
+			}
+		}
+
 		d := 0
 		errs := lint(filename, log)
 		for _, err := range errs {
