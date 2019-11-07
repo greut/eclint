@@ -27,10 +27,6 @@ func walk(paths ...string) ([]string, error) {
 			mode := i.Mode()
 			if mode.IsRegular() && !mode.IsDir() {
 				log.V(4).Info("index %s\n", p)
-				_, err := filepath.Abs(p)
-				if err != nil {
-					return err
-				}
 				files = append(files, p)
 			}
 			return nil
@@ -40,6 +36,28 @@ func walk(paths ...string) ([]string, error) {
 		}
 	}
 	return files, nil
+}
+
+// listFiles returns the list of files based on the input.
+//
+// When its empty, it relies on `git ls-files` first, which
+// whould fail if `git` is not present or the current working
+// directory is not managed by it. In that case, it work the
+// current working directory.
+//
+// When args are given, it recursively walks into them.
+func listFiles(args ...string) ([]string, error) {
+	if len(args) == 0 {
+		fs, err := gitLsFiles(".")
+		if err == nil {
+			return fs, nil
+		}
+
+		log.Error(err, "git ls-files failure")
+		args = append(args, ".")
+	}
+
+	return walk(args...)
 }
 
 func main() {
@@ -60,24 +78,12 @@ func main() {
 	log = klogr.New()
 
 	args := flag.Args()
-	var files []string
-	if len(args) == 0 {
-		fs, err := gitLsFiles(".")
-		if err != nil {
-			args = append(args, ".")
-
-			fs, err := walk(args...)
-			if err != nil {
-				log.Error(err, "error while handling the arguments")
-				flag.Usage()
-				os.Exit(1)
-				return
-			}
-
-			files = fs
-		} else {
-			files = fs
-		}
+	files, err := listFiles(args...)
+	if err != nil {
+		log.Error(err, "error while handling the arguments")
+		flag.Usage()
+		os.Exit(1)
+		return
 	}
 
 	log.V(1).Info("files", "count", len(files), "exclude", exclude)
