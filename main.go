@@ -128,6 +128,9 @@ func main() {
 				c++
 			}
 		}
+		if d > 0 {
+			fmt.Println("")
+		}
 	}
 	if c > 0 {
 		log.V(1).Info("Some errors were found.", "count", c)

@@ -1,0 +1,29 @@
+before:
+  hooks:
+    - go mod tidy
+builds:
+- env:
+  - CGO_ENABLED=0
+archives:
+- replacements:
+    386: i386
+    amd64: x86_64
+dockers:
+  - image_templates:
+    - greut/eclint
+checksum:
+  name_template: 'checksums.txt'
+signs:
+  - artifacts: checksum
+snapshot:
+  name_template: "{{ .Tag }}-next"
+changelog:
+  sort: asc
+  filters:
+    exclude:
+    - '^docs:'
+    - '^test:'
+release:
+  gitlab:
+    owner: greut
+    name: eclint
