@@ -1,8 +1,14 @@
 before:
   hooks:
-    - go mod tidy
+  - go mod tidy
 builds:
 - id: eclint
+  binary: eclint
+  goos:
+  - linux
+  - darwin
+  goarch:
+  - amd64
   env:
   - CGO_ENABLED=0
 archives:
@@ -10,19 +16,19 @@ archives:
     386: i386
     amd64: x86_64
 dockers:
-  - image_templates:
-    - greut/eclint:latest
-    - greut/eclint:{{ .Tag }}
-    - greut/eclint:{{ .Tag }}
-    - greut/eclint:v{{ .Major }}
-    goos: linux
-    goarch: amd64
-    binaries:
-    - eclint
+- image_templates:
+  - greut/eclint:latest
+  - greut/eclint:{{ .Tag }}
+  - greut/eclint:{{ .Tag }}
+  - greut/eclint:v{{ .Major }}
+  goos: linux
+  goarch: amd64
+  binaries:
+  - eclint
 checksum:
   name_template: 'checksums.txt'
 signs:
-  - artifacts: checksum
+- artifacts: checksum
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
