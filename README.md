@@ -31,6 +31,7 @@ $ eclint -exclude "testdata/**/*"
     - `block_comment_start`, `block_comment`, `block_comment_end`
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
+- docker image
 
 ## Missing features
 
@@ -39,7 +40,6 @@ $ eclint -exclude "testdata/**/*"
 - more tests
 - colored output _à la_ ripgrep
 - ability to fix
-- docker image
 - etc.
 
 ## Benchmarks
@@ -50,10 +50,12 @@ The contenders are the following.
 
 - [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker), also in Go.
 
-The methodology is to run the linter against some big repositories such as:
+The methodology is to run the linter against some big repositories `time $(eclint >/dev/null)`.
 
-- Roslyn
-- SaltStack
+| Repository | `editorconfig-checker` | `eclint` |
+|------------|------------------------|----------|
+| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 14s |
+| [SaltStack](https://github.com/saltstack/salt) | 7s | 0.7s |
 
 ## Libraries and tools
 

@@ -43,4 +43,4 @@ goreleaser snapshot:
       -v $PWD:/go/src/gitlab.com/$CI_PROJECT_PATH
       -w /go/src/gitlab.com/$CI_PROJECT_PATH
       $GORELEASER_IMAGE
-      snapshot
+      --snapshot
