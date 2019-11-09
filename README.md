@@ -55,8 +55,10 @@ The methodology is to run the linter against some big repositories such as:
 - Roslyn
 - SaltStack
 
-## Libraries
+## Libraries and tools
 
-- [editorconfig-core-go](https://github.com/editorconfig/editorconfig-core-go)
-- [klogr](https://github.com/kubernetes/klog/tree/master/klogr)
 - [chardet](https://github.com/gogs/chardet)
+- [editorconfig-core-go](https://github.com/editorconfig/editorconfig-core-go)
+- [golangci-lint](https://github.com/golangci/golangci-lint)
+- [goreleaser](https://goreleaser.com/)
+- [klogr](https://github.com/kubernetes/klog/tree/master/klogr)

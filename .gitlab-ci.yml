@@ -23,7 +23,12 @@ eclint:
   script:
     - ./eclint -exclude "{lint_test.go,testdata/**/*}"
 
-  goreleaser snapshot:
+golangci-lint:
+  stage: lint
+  script:
+    - golangci-lint run -v
+
+goreleaser snapshot:
   stage: snapshot
   image: docker:stable
   services:

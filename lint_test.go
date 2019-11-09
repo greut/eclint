@@ -98,25 +98,31 @@ func TestLintSimple(t *testing.T) {
 func TestLintMissing(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, err := range lint("testdata/missing/file", l) {
+	errs := lint("testdata/missing/file", l)
+	if len(errs) == 0 {
+		t.Error("an error was expected, got none")
+	}
+
+	for _, err := range errs {
 		if err == nil {
 			t.Error("an error was expected")
 		}
-		return
 	}
-	t.Error("an error was expected, got none")
 }
 
 func TestLintInvalid(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, err := range lint("testdata/invalid/.editorconfig", l) {
+	errs := lint("testdata/invalid/.editorconfig", l)
+	if len(errs) == 0 {
+		t.Error("an error was expected, got none")
+	}
+
+	for _, err := range errs {
 		if err == nil {
 			t.Error("an error was expected")
 		}
-		return
 	}
-	t.Error("an error was expected, got none")
 }
 
 func TestBlockComment(t *testing.T) {
