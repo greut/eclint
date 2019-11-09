@@ -11,7 +11,7 @@ archives:
 dockers:
   - binaries:
     - eclint
-  - image_templates:
+    image_templates:
     - greut/eclint:latest
     - greut/eclint:{{ .Tag }}
     - greut/eclint:{{ .Tag }}
