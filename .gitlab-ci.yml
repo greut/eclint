@@ -17,4 +17,4 @@ go test:
 eclint:
   stage: lint
   script:
-    - ./eclint -exclude "testdata/**/*"
+    - ./eclint -exclude "{lint_test.go,testdata/**/*}"

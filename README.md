@@ -26,15 +26,16 @@ $ eclint -exclude "testdata/**/*"
 - `indent_style`
 - `insert_final_newline`
 - `trim_trailing_whitespace`
+- [domain-specific properties](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties)
+    - `line_comment`
+    - `block_comment_start`, `block_comment`, `block_comment_end`
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
 
 ## Missing features
 
+- basic `//nolint` [suffix](https://github.com/golangci/golangci-lint#nolint)
 - doing checks on `rune` rather than `byte`
-- [domain-specific properties](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties)
-    - `line_comment`
-    - `block_comment_start`, `block_comment`, `block_comment_end`
 - more tests
 - colored output _à la_ ripgrep
 - ability to fix
