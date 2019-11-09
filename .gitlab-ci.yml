@@ -35,8 +35,8 @@ goreleaser snapshot:
   services:
   - docker:dind
   script:
+    - docker pull $GORELEASER_IMAGE
     - docker run
-      --pull
       --rm
       --privileged
       -v /var/run/docker.sock:/var/run/docker.sock
