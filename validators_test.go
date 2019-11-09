@@ -328,3 +328,29 @@ func TestIndentStyleFailure(t *testing.T) {
 		})
 	}
 }
+
+func TestCheckBlockComment(t *testing.T) {
+	tests := []struct {
+		Name     string
+		Position int
+		Prefix   []byte
+		Line     []byte
+	}{
+		{
+			Name:     "Java",
+			Position: 5,
+			Prefix:   []byte{'*'},
+			Line:     []byte("\t\t\t\t *\r\n"),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := checkBlockComment(tc.Position, tc.Prefix, tc.Line)
+			if err != nil {
+				t.Errorf("no errors where expected, got %s", err)
+			}
+		})
+	}
+}

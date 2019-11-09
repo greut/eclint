@@ -38,12 +38,15 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 	return 0, nil, io.EOF
 }
 
+// readLines consumes the reader and emit each line via the lineFunc
+//
+// Line numbering starts at 1
 func readLines(r io.Reader, fn lineFunc) []error {
 	errs := make([]error, 0)
 	sc := bufio.NewScanner(r)
 	sc.Split(splitLines)
 
-	i := 0
+	i := 1
 	for sc.Scan() {
 		line := sc.Bytes()
 		if err := fn(i, line); err != nil {

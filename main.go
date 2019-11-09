@@ -1,10 +1,12 @@
 package main
 
 import (
+	"bytes"
 	"flag"
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
@@ -108,11 +110,20 @@ func main() {
 		errs := lint(filename, log)
 		for _, err := range errs {
 			if err != nil {
-				log.V(4).Info("lint error", "filename", filename, "error", err)
 				if d == 0 {
 					fmt.Printf("%s:\n", filename)
 				}
-				fmt.Printf("\t%s\n", err)
+
+				if ve, ok := err.(validationError); ok {
+					log.V(4).Info("lint error", "error", ve)
+					fmt.Printf("%d:%d: %s\n", ve.index, ve.position, ve.error)
+					l := strings.Trim(string(ve.line), "\r\n")
+					fmt.Println(l)
+					fmt.Println(string(errorAt(ve.line, ve.position)))
+				} else {
+					log.V(4).Info("lint error", "filename", filename, "error", err)
+					fmt.Println(err)
+				}
 				d++
 				c++
 			}
@@ -122,4 +133,22 @@ func main() {
 		log.V(1).Info("Some errors were found.", "count", c)
 		os.Exit(1)
 	}
+}
+
+func errorAt(line []byte, position int) []byte {
+	b := bytes.NewBuffer(make([]byte, len(line)))
+
+	if position > len(line) {
+		position = len(line)
+	}
+	for i := 0; i < position; i++ {
+		if line[i] == '\t' {
+			b.WriteByte('\t')
+		} else {
+			b.WriteByte(' ')
+		}
+	}
+
+	b.WriteByte('^')
+	return b.Bytes()
 }

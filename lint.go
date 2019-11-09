@@ -20,11 +20,33 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
 	var lastLine []byte
+
+	var insideBlockComment bool
+	var blockCommentStart []byte
+	var blockComment []byte
+	var blockCommentEnd []byte
+	if def.IndentStyle != "" {
+		bs, ok := def.Raw["block_comment_start"]
+		if ok && bs != "" {
+			blockCommentStart = []byte(bs)
+			bc, ok := def.Raw["block_comment"]
+			if ok && bc != "" {
+				blockComment = []byte(bc)
+			}
+
+			be, ok := def.Raw["block_comment_end"]
+			if !ok || be == "" {
+				return []error{fmt.Errorf("block_comment_end was expected, none were found")}
+			}
+			blockCommentEnd = []byte(be)
+		}
+	}
+
 	errs := readLines(r, func(index int, data []byte) error {
 		var err error
 
 		// The first line may contain the BOM for detecting some encodings
-		if index == 0 && def.Charset != "" {
+		if index == 1 && def.Charset != "" {
 			ok, err := charsetUsingBOM(def.Charset, data)
 			if err != nil {
 				return err
@@ -49,15 +71,35 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		}
 
 		if err == nil && def.IndentStyle != "" {
+			if insideBlockComment && blockCommentEnd != nil {
+				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
+			}
+
 			err = indentStyle(def.IndentStyle, indentSize, data)
+			if err != nil && insideBlockComment && blockComment != nil {
+				// The indentation may fail within a block comment.
+				if ve, ok := err.(validationError); ok {
+					err = checkBlockComment(ve.position, blockComment, data)
+				}
+			}
+
+			if err == nil && !insideBlockComment && blockCommentStart != nil {
+				insideBlockComment = isBlockCommentStart(blockCommentStart, data)
+			}
 		}
 
 		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
 			err = trimTrailingWhitespace(data)
 		}
 
+		// Enrich the error with the line number
 		if err != nil {
-			return fmt.Errorf("line %d: %s", index, err)
+			if ve, ok := err.(validationError); ok {
+				ve.line = data
+				ve.index = index
+				return ve
+			}
+			return err
 		}
 
 		return nil
@@ -110,5 +152,17 @@ func lint(filename string, log logr.Logger) []error {
 	}
 	defer fp.Close()
 
-	return validate(fp, log, def)
+	errs := validate(fp, log, def)
+
+	// Enrich the errors with the filename
+	for i, err := range errs {
+		if ve, ok := err.(validationError); ok {
+			ve.filename = filename
+			errs[i] = ve
+		} else if err != nil {
+			errs[i] = fmt.Errorf("%s:%w", filename, err)
+		}
+	}
+
+	return errs
 }

@@ -23,6 +23,7 @@ func utf16be(s string) []byte {
 	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s))) // nolint: errcheck
 	return buf.Bytes()
 }
+
 func TestInsertFinalNewline(t *testing.T) {
 	tests := []struct {
 		Name               string
@@ -33,7 +34,7 @@ func TestInsertFinalNewline(t *testing.T) {
 			Name:               "has final newline",
 			InsertFinalNewline: true,
 			File: []byte(`A file
-with a final newline.
+			with a final newline.
 `),
 		}, {
 			Name:               "has newline",
@@ -116,4 +117,53 @@ func TestLintInvalid(t *testing.T) {
 		return
 	}
 	t.Error("an error was expected, got none")
+}
+
+func TestBlockComment(t *testing.T) {
+	tests := []struct {
+		Name              string
+		BlockCommentStart string
+		BlockComment      string
+		BlockCommentEnd   string
+		File              []byte
+	}{
+		{
+			Name:              "Java",
+			BlockCommentStart: "/*",
+			BlockComment:      "*",
+			BlockCommentEnd:   "*/",
+			File: []byte(`
+	/**
+	 *
+	 */
+	public class ... {}
+`),
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+
+		// Test the nominal case
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			def := &editorconfig.Definition{
+				IndentStyle: "tab",
+			}
+			def.Raw = make(map[string]string)
+			def.Raw["block_comment_start"] = tc.BlockCommentStart
+			def.Raw["block_comment"] = tc.BlockComment
+			def.Raw["block_comment_end"] = tc.BlockCommentEnd
+
+			r := bytes.NewReader(tc.File)
+			for _, err := range validate(r, l, def) {
+				if err != nil {
+					t.Errorf("no errors where expected, got %s", err)
+				}
+			}
+		})
+	}
 }

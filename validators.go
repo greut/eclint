@@ -7,20 +7,43 @@ import (
 	"github.com/gogs/chardet"
 )
 
+// validationError is a rich type containing information about the error
+type validationError struct {
+	error    string
+	filename string
+	line     []byte
+	index    int
+	position int
+}
+
+// Error builds the error string.
+func (e validationError) Error() string {
+	return fmt.Sprintf("%d:%d: %s", e.index, e.position, e.error)
+}
+
 // endOfLines checks the line ending
 func endOfLine(eol string, data []byte) error {
 	switch eol {
 	case "lf":
 		if !bytes.HasSuffix(data, []byte{'\n'}) || bytes.HasSuffix(data, []byte{'\r', '\n'}) {
-			return fmt.Errorf("line does not end with lf (`\\n`)")
+			return validationError{
+				error:    "line does not end with lf (`\\n`)",
+				position: len(data) - 1,
+			}
 		}
 	case "crlf":
 		if !bytes.HasSuffix(data, []byte{'\r', '\n'}) {
-			return fmt.Errorf("line does not end with crlf (`\\r\\n`)")
+			return validationError{
+				error:    "line does not end with crlf (`\\r\\n`)",
+				position: len(data) - 1,
+			}
 		}
 	case "cr":
 		if !bytes.HasSuffix(data, []byte{'\r'}) {
-			return fmt.Errorf("line does not end with cr (`\\r`)")
+			return validationError{
+				error:    "line does not end with cr (`\\r`)",
+				position: len(data) - 1,
+			}
 		}
 	default:
 		return fmt.Errorf("%q is an invalid value for eol, want cr, crlf, or lf", eol)
@@ -34,23 +57,23 @@ func charsetUsingBOM(charset string, data []byte) (bool, error) {
 	switch charset {
 	case "utf-8 bom":
 		if !bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
-			return false, fmt.Errorf("no UTF-8 BOM were found")
+			return false, validationError{error: "no UTF-8 BOM were found"}
 		}
 	case "utf-16le":
 		if !bytes.HasPrefix(data, []byte{0xff, 0xfe}) {
-			return false, fmt.Errorf("no UTF-16LE BOM were found")
+			return false, validationError{error: "no UTF-16LE BOM were found"}
 		}
 	case "utf-16be":
 		if !bytes.HasPrefix(data, []byte{0xfe, 0xff}) {
-			return false, fmt.Errorf("no UTF-16BE BOM were found")
+			return false, validationError{error: "no UTF-16BE BOM were found"}
 		}
 	case "utf-32le":
 		if !bytes.HasPrefix(data, []byte{0xff, 0xfe, 0, 0}) {
-			return false, fmt.Errorf("no UTF-32LE BOM were found")
+			return false, validationError{error: "no UTF-32LE BOM were found"}
 		}
 	case "utf-32be":
 		if !bytes.HasPrefix(data, []byte{0, 0, 0xfe, 0xff}) {
-			return false, fmt.Errorf("no UTF-32BE BOM were found")
+			return false, validationError{error: "no UTF-32BE BOM were found"}
 		}
 	default:
 		return false, nil
@@ -82,7 +105,9 @@ func charset(charset string, data []byte) error {
 	}
 
 	if len(results) > 0 {
-		return fmt.Errorf("detected charset %q does not match expected %q", results[0].Charset, charset)
+		return validationError{
+			error: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
+		}
 	}
 
 	return nil
@@ -109,12 +134,18 @@ func indentStyle(style string, size int, data []byte) error {
 			continue
 		}
 		if data[i] == x {
-			return fmt.Errorf("pos %d: indentation style mismatch expected %s", i, style)
+			return validationError{
+				error:    fmt.Sprintf("indentation style mismatch expected %s", style),
+				position: i,
+			}
 		}
 		if data[i] == '\r' || data[i] == '\n' || (size > 0 && i%size == 0) {
 			break
 		}
-		return fmt.Errorf("pos %d: indentation size doesn't match expected %d, got %d", i, size, i)
+		return validationError{
+			error:    fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
+			position: i,
+		}
 	}
 
 	return nil
@@ -127,9 +158,51 @@ func trimTrailingWhitespace(data []byte) error {
 			continue
 		}
 		if data[i] == ' ' || data[i] == '\t' {
-			return fmt.Errorf("pos %d: looks like a trailing whitespace", i)
+			return validationError{
+				error:    "line has some trailing whitespaces",
+				position: i,
+			}
 		}
 		break
 	}
 	return nil
+}
+
+// isBlockCommentStart tells you when a block comment started on this line
+func isBlockCommentStart(start []byte, data []byte) bool {
+	for i := 0; i < len(data); i++ {
+		if data[i] == ' ' || data[i] == '\t' {
+			continue
+		}
+		return bytes.HasPrefix(data[i:], start)
+	}
+	return false
+}
+
+// checkBlockComment checks the line is a valid block comment
+func checkBlockComment(i int, prefix []byte, data []byte) error {
+	for ; i < len(data); i++ {
+		if data[i] == ' ' || data[i] == '\t' {
+			continue
+		}
+		if !bytes.HasPrefix(data[i:], prefix) {
+			return validationError{
+				error:    fmt.Sprintf("the block_comment prefix %q was expected inside a block comment", string(prefix)),
+				position: i,
+			}
+		}
+		break
+	}
+	return nil
+}
+
+// isBlockCommentEnd tells you when a block comment end on this line
+func isBlockCommentEnd(end []byte, data []byte) bool {
+	for i := len(data) - 1; i > 0; i-- {
+		if data[i] == '\r' || data[i] == '\n' {
+			continue
+		}
+		return bytes.HasSuffix(data[:i], end)
+	}
+	return false
 }
