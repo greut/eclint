@@ -9,8 +9,13 @@ archives:
     386: i386
     amd64: x86_64
 dockers:
+  - binaries:
+    - eclint
   - image_templates:
-    - greut/eclint
+    - greut/eclint:latest
+    - greut/eclint:{{ .Tag }}
+    - greut/eclint:{{ .Tag }}
+    - greut/eclint:v{{ .Major }}
 checksum:
   name_template: 'checksums.txt'
 signs:
