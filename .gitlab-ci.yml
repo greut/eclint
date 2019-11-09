@@ -25,6 +25,7 @@ eclint:
 
 golangci-lint:
   stage: lint
+  image: golangci/golangci-lint
   script:
     - golangci-lint run -v
 
