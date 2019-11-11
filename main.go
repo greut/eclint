@@ -4,12 +4,19 @@ import (
 	"bytes"
 	"flag"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
-	"strings"
+	"runtime"
+	"strconv"
+	"syscall"
+
+	"golang.org/x/crypto/ssh/terminal"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
+	"github.com/logrusorgru/aurora"
+	"github.com/mattn/go-colorable"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 )
@@ -63,17 +70,25 @@ func listFiles(args ...string) ([]string, error) {
 }
 
 func main() {
+	var stdout io.Writer = os.Stdout
+	isTerminal := terminal.IsTerminal(syscall.Stdout)
+	if runtime.GOOS == "windows" {
+		stdout = colorable.NewColorableStdout()
+	}
+
 	var flagVersion bool
 
 	exclude := ""
+	noColors := false
 
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
+	flag.BoolVar(&noColors, "no-colors", false, "enable or disable colors")
 	flag.StringVar(&exclude, "exclude", "", "paths to exclude")
 	flag.Parse()
 
 	if flagVersion {
-		fmt.Printf("eclint %s\n", version)
+		fmt.Fprintf(stdout, "eclint %s\n", version)
 		return
 	}
 
@@ -88,6 +103,7 @@ func main() {
 		return
 	}
 
+	au := aurora.NewAurora(isTerminal && !noColors)
 	log.V(1).Info("files", "count", len(files), "exclude", exclude)
 
 	c := 0
@@ -97,7 +113,7 @@ func main() {
 			ok, err := editorconfig.FnmatchCase(exclude, filename)
 			if err != nil {
 				log.Error(err, "exclude pattern failure", "exclude", exclude)
-				fmt.Printf("exclude pattern failure %s", err)
+				fmt.Fprintf(stdout, "exclude pattern failure %s", err)
 				c++
 				break
 			}
@@ -111,25 +127,28 @@ func main() {
 		for _, err := range errs {
 			if err != nil {
 				if d == 0 {
-					fmt.Printf("%s:\n", filename)
+					fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename))
 				}
 
 				if ve, ok := err.(validationError); ok {
 					log.V(4).Info("lint error", "error", ve)
-					fmt.Printf("%d:%d: %s\n", ve.index, ve.position, ve.error)
-					l := strings.Trim(string(ve.line), "\r\n")
-					fmt.Println(l)
-					fmt.Println(string(errorAt(ve.line, ve.position-1)))
+					fmt.Fprintf(stdout, "%s:%s: %s\n", au.Green(strconv.Itoa(ve.index)), au.Green(strconv.Itoa(ve.position)), ve.error)
+					l, err := errorAt(au, ve.line, ve.position-1)
+					if err != nil {
+						log.Error(err, "line formating failure", "error", ve)
+						continue
+					}
+					fmt.Fprintln(stdout, l)
 				} else {
 					log.V(4).Info("lint error", "filename", filename, "error", err)
-					fmt.Println(err)
+					fmt.Fprintln(stdout, err)
 				}
 				d++
 				c++
 			}
 		}
 		if d > 0 {
-			fmt.Println("")
+			fmt.Fprintln(stdout, "")
 		}
 	}
 	if c > 0 {
@@ -138,20 +157,36 @@ func main() {
 	}
 }
 
-func errorAt(line []byte, position int) []byte {
+func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	b := bytes.NewBuffer(make([]byte, len(line)))
 
 	if position > len(line) {
 		position = len(line)
 	}
+
 	for i := 0; i < position; i++ {
-		if line[i] == '\t' {
-			b.WriteByte('\t')
-		} else {
-			b.WriteByte(' ')
+		if line[i] != '\r' && line[i] != '\n' {
+			if err := b.WriteByte(line[i]); err != nil {
+				return "", err
+			}
 		}
 	}
 
-	b.WriteByte('^')
-	return b.Bytes()
+	s := " "
+	if position < len(line)-1 {
+		s = string(line[position : position+1])
+	}
+	if _, err := b.WriteString(au.White(s).BgRed().String()); err != nil {
+		return "", err
+	}
+
+	for i := position + 1; i < len(line); i++ {
+		if line[i] != '\r' && line[i] != '\n' {
+			if err := b.WriteByte(line[i]); err != nil {
+				return "", err
+			}
+		}
+	}
+
+	return b.String(), nil
 }

@@ -183,10 +183,8 @@ func TestEndOfLineFailures(t *testing.T) {
 				if tc.Position != ve.position {
 					t.Errorf("position mismatch %d, got %d", tc.Position, ve.position)
 				}
-			} else {
-				if err == nil {
-					t.Error("an error was expected")
-				}
+			} else if err == nil {
+				t.Error("an error was expected")
 			}
 		})
 	}

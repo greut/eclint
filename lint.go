@@ -12,7 +12,7 @@ import (
 )
 
 // validate is where the validations rules are applied
-func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error {
+func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error { //nolint:gocyclo
 	var buf *bytes.Buffer
 	// chardet uses a 8192 bytebuf for detection
 	bufSize := 8192
