@@ -1,7 +1,9 @@
+github.com/blang/semver v3.5.1+incompatible h1:cQNTCjp13qL8KC3Nbxr/y2Bqb63oX6wdnnjpJbkM4JQ=
+github.com/blang/semver v3.5.1+incompatible/go.mod h1:kRBLl5iJ+tD4TcOOxsy/0fnwebNt5EWlYSAyrTnjyyk=
 github.com/davecgh/go-spew v1.1.0 h1:ZDRjVQ15GmhC3fiQ8ni8+OwkZQO4DARzQgrnXU1Liz8=
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/editorconfig/editorconfig-core-go/v2 v2.2.0 h1:Gn1PqdLRUQy8nvWxbLPUCEPeWNpwtkwe0fRKAyd7+uo=
-github.com/editorconfig/editorconfig-core-go/v2 v2.2.0/go.mod h1:/LuhWJiQ9Gvo1DhVpa4ssm5qeg8rrztdtI7j/iCie2k=
+github.com/editorconfig/editorconfig-core-go/v2 v2.2.1 h1:jY5PCRQf4V0oqpim/Ympl6MwHcb9+nBHEnHOPXqNZ/A=
+github.com/editorconfig/editorconfig-core-go/v2 v2.2.1/go.mod h1:6XDmqAZsQu8ikS+onLRJfLZvTP3RWTVT8ROX6qcdkio=
 github.com/go-logr/logr v0.1.0 h1:M1Tv3VzNlEHg6uyACnRdtrploV2P7wZqH8BoQMtz0cg=
 github.com/go-logr/logr v0.1.0/go.mod h1:ixOQHD9gLJUVQQ2ZOR7zLEifBX6tGkNJF4QyIY7sIas=
 github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28 h1:gBeyun7mySAKWg7Fb0GOcv0upX9bdaZScs8QcRo8mEY=
