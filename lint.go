@@ -60,6 +60,15 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		// The last line may not have the expected ending.
 		if lastLine != nil && def.EndOfLine != "" {
 			err = endOfLine(def.EndOfLine, lastLine)
+			// XXX not so nice hack
+			if ve, ok := err.(validationError); ok {
+				ve.line = lastLine
+				ve.index = index - 1
+
+				lastLine = data
+
+				return ve
+			}
 		}
 
 		lastLine = data

@@ -131,35 +131,43 @@ func TestEndOfLineFailures(t *testing.T) {
 		Name      string
 		EndOfLine string
 		Line      []byte
+		Position  int
 	}{
 		{
 			Name:      "cr instead of crlf",
 			EndOfLine: "crlf",
 			Line:      []byte("\r"),
+			Position:  1,
 		}, {
 			Name:      "lf instead of crlf",
 			EndOfLine: "crlf",
-			Line:      []byte("\n"),
+			Line:      []byte("[*]\n"),
+			Position:  4,
 		}, {
 			Name:      "cr instead of lf",
 			EndOfLine: "lf",
 			Line:      []byte("\r"),
+			Position:  1,
 		}, {
 			Name:      "crlf instead of lf",
 			EndOfLine: "lf",
 			Line:      []byte("\r\n"),
+			Position:  2,
 		}, {
 			Name:      "crlf instead of cr",
 			EndOfLine: "cr",
 			Line:      []byte("\r\n"),
+			Position:  2,
 		}, {
 			Name:      "lf instead of cr",
 			EndOfLine: "cr",
-			Line:      []byte("\n"),
+			Line:      []byte("hello\n"),
+			Position:  6,
 		}, {
 			Name:      "unknown eol",
 			EndOfLine: "lfcr",
 			Line:      []byte("\n\r"),
+			Position:  -1,
 		},
 	}
 	for _, tc := range tests {
@@ -167,8 +175,18 @@ func TestEndOfLineFailures(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
-			if err == nil {
-				t.Error("an error was expected")
+			ve, ok := err.(validationError)
+			if tc.Position >= 0 {
+				if !ok {
+					t.Errorf("a validationError was expected, got %v", err)
+				}
+				if tc.Position != ve.position {
+					t.Errorf("position mismatch %d, got %d", tc.Position, ve.position)
+				}
+			} else {
+				if err == nil {
+					t.Error("an error was expected")
+				}
 			}
 		})
 	}
