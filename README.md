@@ -31,14 +31,14 @@ $ eclint -exclude "testdata/**/*"
     - `block_comment_start`, `block_comment`, `block_comment_end`
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
-- docker image
+- [Docker images](https://hub.docker.com/r/greut/eclint)
+- colored output _à la_ ripgrep
 
 ## Missing features
 
 - basic `//nolint` [suffix](https://github.com/golangci/golangci-lint#nolint)
 - doing checks on `rune` rather than `byte`
 - more tests
-- colored output _à la_ ripgrep
 - ability to fix
 - etc.
 
@@ -59,8 +59,10 @@ The methodology is to run the linter against some big repositories `time $(eclin
 
 ## Libraries and tools
 
-- [chardet](https://github.com/gogs/chardet)
-- [editorconfig-core-go](https://github.com/editorconfig/editorconfig-core-go)
-- [golangci-lint](https://github.com/golangci/golangci-lint)
+- [aurora](https://github.com/logrusorgru/aurora), colored output
+- [chardet](https://github.com/gogs/chardet), charset detection
+- [editorconfig-core-go](https://github.com/editorconfig/editorconfig-core-go), `.editorconfig` parsing
+- [go-colorable](https://github.com/mattn/go-colorable), colored output on Windows (too soon)
+- [golangci-lint](https://github.com/golangci/golangci-lint), Go linters
 - [goreleaser](https://goreleaser.com/)
 - [klogr](https://github.com/kubernetes/klog/tree/master/klogr)
