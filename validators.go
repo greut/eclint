@@ -28,21 +28,21 @@ func endOfLine(eol string, data []byte) error {
 		if !bytes.HasSuffix(data, []byte{'\n'}) || bytes.HasSuffix(data, []byte{'\r', '\n'}) {
 			return validationError{
 				error:    "line does not end with lf (`\\n`)",
-				position: len(data) - 1,
+				position: len(data),
 			}
 		}
 	case "crlf":
 		if !bytes.HasSuffix(data, []byte{'\r', '\n'}) {
 			return validationError{
 				error:    "line does not end with crlf (`\\r\\n`)",
-				position: len(data) - 1,
+				position: len(data),
 			}
 		}
 	case "cr":
 		if !bytes.HasSuffix(data, []byte{'\r'}) {
 			return validationError{
 				error:    "line does not end with cr (`\\r`)",
-				position: len(data) - 1,
+				position: len(data),
 			}
 		}
 	default:
@@ -136,7 +136,7 @@ func indentStyle(style string, size int, data []byte) error {
 		if data[i] == x {
 			return validationError{
 				error:    fmt.Sprintf("indentation style mismatch expected %s", style),
-				position: i,
+				position: i + 1,
 			}
 		}
 		if data[i] == '\r' || data[i] == '\n' || (size > 0 && i%size == 0) {
@@ -144,7 +144,7 @@ func indentStyle(style string, size int, data []byte) error {
 		}
 		return validationError{
 			error:    fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
-			position: i,
+			position: i + 1,
 		}
 	}
 
@@ -160,7 +160,7 @@ func trimTrailingWhitespace(data []byte) error {
 		if data[i] == ' ' || data[i] == '\t' {
 			return validationError{
 				error:    "line has some trailing whitespaces",
-				position: i,
+				position: i + 1,
 			}
 		}
 		break
@@ -188,7 +188,7 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 		if !bytes.HasPrefix(data[i:], prefix) {
 			return validationError{
 				error:    fmt.Sprintf("the block_comment prefix %q was expected inside a block comment", string(prefix)),
-				position: i,
+				position: i + 1,
 			}
 		}
 		break

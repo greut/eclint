@@ -119,7 +119,7 @@ func main() {
 					fmt.Printf("%d:%d: %s\n", ve.index, ve.position, ve.error)
 					l := strings.Trim(string(ve.line), "\r\n")
 					fmt.Println(l)
-					fmt.Println(string(errorAt(ve.line, ve.position)))
+					fmt.Println(string(errorAt(ve.line, ve.position-1)))
 				} else {
 					log.V(4).Info("lint error", "filename", filename, "error", err)
 					fmt.Println(err)
