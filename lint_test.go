@@ -157,6 +157,8 @@ func TestBlockComment(t *testing.T) {
 			t.Parallel()
 
 			def := &editorconfig.Definition{
+				EndOfLine:   "lf",
+				Charset:     "utf-8",
 				IndentStyle: "tab",
 			}
 			def.Raw = make(map[string]string)
@@ -169,6 +171,53 @@ func TestBlockComment(t *testing.T) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
+			}
+		})
+	}
+}
+
+func TestBlockCommentFailure(t *testing.T) {
+	tests := []struct {
+		Name              string
+		BlockCommentStart string
+		BlockComment      string
+		BlockCommentEnd   string
+		File              []byte
+	}{
+		{
+			Name:              "Java no block_comment_end",
+			BlockCommentStart: "/*",
+			BlockComment:      "*",
+			BlockCommentEnd:   "",
+			File:              []byte(`Hello!`),
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+
+		// Test the nominal case
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			def := &editorconfig.Definition{
+				IndentStyle: "tab",
+			}
+			def.Raw = make(map[string]string)
+			def.Raw["block_comment_start"] = tc.BlockCommentStart
+			def.Raw["block_comment"] = tc.BlockComment
+			def.Raw["block_comment_end"] = tc.BlockCommentEnd
+
+			r := bytes.NewReader(tc.File)
+			errs := validate(r, l, def)
+			if len(errs) == 0 {
+				t.Errorf("one error was expected, got none")
+				return
+			}
+			if errs[0] == nil {
+				t.Errorf("no errors where expected, got %s", errs[0])
 			}
 		})
 	}

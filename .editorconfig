@@ -16,3 +16,6 @@ indent_size = 2
 
 [{*.go,go.*}]
 indent_style = tab
+
+[lint_test.go]
+eclint_indent_style = unset
