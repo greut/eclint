@@ -6,6 +6,7 @@ import (
 	"io"
 	"os"
 	"strconv"
+	"strings"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
@@ -25,17 +26,17 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	var blockCommentStart []byte
 	var blockComment []byte
 	var blockCommentEnd []byte
-	if def.IndentStyle != "" {
+	if def.IndentStyle != "" && def.IndentStyle != "unset" {
 		bs, ok := def.Raw["block_comment_start"]
-		if ok && bs != "" {
+		if ok && bs != "" && bs != "unset" {
 			blockCommentStart = []byte(bs)
 			bc, ok := def.Raw["block_comment"]
-			if ok && bc != "" {
+			if ok && bc != "" && bs != "unset" {
 				blockComment = []byte(bc)
 			}
 
 			be, ok := def.Raw["block_comment_end"]
-			if !ok || be == "" {
+			if !ok || be == "" || be == "unset" {
 				return []error{fmt.Errorf("block_comment_end was expected, none were found")}
 			}
 			blockCommentEnd = []byte(be)
@@ -79,7 +80,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			}
 		}
 
-		if err == nil && def.IndentStyle != "" {
+		if err == nil && def.IndentStyle != "" && def.IndentStyle != "unset" {
 			if insideBlockComment && blockCommentEnd != nil {
 				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
 			}
@@ -88,7 +89,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			if err != nil && insideBlockComment && blockComment != nil {
 				// The indentation may fail within a block comment.
 				if ve, ok := err.(validationError); ok {
-					err = checkBlockComment(ve.position, blockComment, data)
+					err = checkBlockComment(ve.position-1, blockComment, data)
 				}
 			}
 
@@ -146,6 +147,36 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	return errs
 }
 
+func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
+	for k, v := range def.Raw {
+		if strings.HasPrefix(k, prefix) {
+			nk := k[len(prefix):]
+			def.Raw[nk] = v
+			switch nk {
+			case "indent_style":
+				def.IndentStyle = v
+			case "indent_size":
+				def.IndentSize = v
+			case "charset":
+				def.Charset = v
+			case "end_of_line":
+				def.EndOfLine = v
+			case "tab_width":
+				i, err := strconv.Atoi(v)
+				if err != nil {
+					return fmt.Errorf("tab_width cannot be set. %w", err)
+				}
+				def.TabWidth = i
+			case "trim_trailing_whitespace":
+				return fmt.Errorf("%v cannot be overriden yet, pr welcome", nk)
+			case "insert_final_newline":
+				return fmt.Errorf("%v cannot be overriden yet, pr welcome", nk)
+			}
+		}
+	}
+	return nil
+}
+
 func lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
@@ -160,6 +191,11 @@ func lint(filename string, log logr.Logger) []error {
 		return []error{err}
 	}
 	defer fp.Close()
+
+	err = overrideUsingPrefix(def, "eclint_")
+	if err != nil {
+		return []error{err}
+	}
 
 	errs := validate(fp, log, def)
 

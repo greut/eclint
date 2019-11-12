@@ -280,6 +280,10 @@ func TestIndentStyle(t *testing.T) {
 			IndentSize:  3,
 			IndentStyle: "tab",
 			Line:        []byte("\t\t\t\t."),
+		}, {
+			Name:        "unset",
+			IndentSize:  5,
+			IndentStyle: "unset",
 		},
 	}
 	for _, tc := range tests {

@@ -31,6 +31,7 @@ $ eclint -exclude "testdata/**/*"
     - `block_comment_start`, `block_comment`, `block_comment_end`
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
+- unset / alter properties via the `eclint_` prefix
 - [Docker images](https://hub.docker.com/r/greut/eclint)
 - colored output _à la_ ripgrep
 

@@ -18,7 +18,7 @@ eclint:
   stage: lint
   script:
     - go build .
-    - ./eclint -exclude "{lint_test.go,testdata/**/*}"
+    - ./eclint -exclude "testdata/**/*"
 
 golangci-lint:
   stage: lint

@@ -125,6 +125,8 @@ func indentStyle(style string, size int, data []byte) error {
 		c = '\t'
 		x = ' '
 		size = 1
+	case "unset":
+		return nil
 	default:
 		return fmt.Errorf("%q is an invalid value of indent_style, want tab or space", style)
 	}
