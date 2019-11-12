@@ -33,7 +33,9 @@ $ eclint -exclude "testdata/**/*"
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
 - [Docker images](https://hub.docker.com/r/greut/eclint)
-- colored output _à la_ ripgrep
+- colored output _à la_ ripgrep (use `-no_colors` to disable)
+- `-summary` mode showing only the number of errors per file
+- only the X first errors are shown (use `-show_all_errors` to disable)
 
 ## Missing features
 
