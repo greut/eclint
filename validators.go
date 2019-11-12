@@ -137,7 +137,7 @@ func indentStyle(style string, size int, data []byte) error {
 		}
 		if data[i] == x {
 			return validationError{
-				error:    fmt.Sprintf("indentation style mismatch expected %s", style),
+				error:    fmt.Sprintf("indentation style mismatch expected %q (%s) got %q", c, style, x),
 				position: i + 1,
 			}
 		}

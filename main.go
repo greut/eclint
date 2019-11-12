@@ -80,10 +80,15 @@ func main() {
 
 	exclude := ""
 	noColors := false
+	summary := false
+	showAllErrors := false
+	showErrorQuantity := 10
 
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
-	flag.BoolVar(&noColors, "no-colors", false, "enable or disable colors")
+	flag.BoolVar(&noColors, "no_colors", false, "enable or disable colors")
+	flag.BoolVar(&summary, "summary", false, "enable the summary view")
+	flag.BoolVar(&showAllErrors, "show_all_errors", false, fmt.Sprintf("display all errors for each file (otherwise %d are kept)", showErrorQuantity))
 	flag.StringVar(&exclude, "exclude", "", "paths to exclude")
 	flag.Parse()
 
@@ -126,29 +131,41 @@ func main() {
 		errs := lint(filename, log)
 		for _, err := range errs {
 			if err != nil {
-				if d == 0 {
+				if d == 0 && !summary {
 					fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename))
 				}
 
 				if ve, ok := err.(validationError); ok {
 					log.V(4).Info("lint error", "error", ve)
-					fmt.Fprintf(stdout, "%s:%s: %s\n", au.Green(strconv.Itoa(ve.index)), au.Green(strconv.Itoa(ve.position)), ve.error)
-					l, err := errorAt(au, ve.line, ve.position-1)
-					if err != nil {
-						log.Error(err, "line formating failure", "error", ve)
-						continue
+					if !summary {
+						fmt.Fprintf(stdout, "%s:%s: %s\n", au.Green(strconv.Itoa(ve.index)), au.Green(strconv.Itoa(ve.position)), ve.error)
+						l, err := errorAt(au, ve.line, ve.position-1)
+						if err != nil {
+							log.Error(err, "line formating failure", "error", ve)
+							continue
+						}
+						fmt.Fprintln(stdout, l)
 					}
-					fmt.Fprintln(stdout, l)
 				} else {
 					log.V(4).Info("lint error", "filename", filename, "error", err)
 					fmt.Fprintln(stdout, err)
 				}
+
+				if d >= showErrorQuantity && len(errs) > d {
+					fmt.Fprintln(stdout, fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errs)-d))))
+					break
+				}
+
 				d++
 				c++
 			}
 		}
 		if d > 0 {
-			fmt.Fprintln(stdout, "")
+			if !summary {
+				fmt.Fprintln(stdout, "")
+			} else {
+				fmt.Fprintf(stdout, "%s: %d errors\n", au.Magenta(filename), d)
+			}
 		}
 	}
 	if c > 0 {
