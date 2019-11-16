@@ -23,4 +23,5 @@ linters:
     - structcheck
     - unused
     - varcheck
+    - gosec
   disable-all: true

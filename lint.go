@@ -12,6 +12,9 @@ import (
 	"github.com/go-logr/logr"
 )
 
+// DefaultTabWidth sets the width of a tab used when counting the line length
+const DefaultTabWidth = 8
+
 // validate is where the validations rules are applied
 func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error { //nolint:gocyclo
 	var buf *bytes.Buffer
@@ -21,6 +24,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
 	var lastLine []byte
+	var lastIndex int
 
 	var insideBlockComment bool
 	var blockCommentStart []byte
@@ -40,6 +44,19 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 				return []error{fmt.Errorf("block_comment_end was expected, none were found")}
 			}
 			blockCommentEnd = []byte(be)
+		}
+	}
+
+	maxLength := 0
+	tabWidth := def.TabWidth
+	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != "unset" {
+		ml, err := strconv.Atoi(mll)
+		if err != nil || ml < 0 {
+			return []error{fmt.Errorf("max_line_length expected a non-negative number, got %s", mll)}
+		}
+		maxLength = ml
+		if tabWidth <= 0 {
+			tabWidth = DefaultTabWidth
 		}
 	}
 
@@ -64,15 +81,17 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			// XXX not so nice hack
 			if ve, ok := err.(validationError); ok {
 				ve.line = lastLine
-				ve.index = index - 1
+				ve.index = lastIndex
 
 				lastLine = data
+				lastIndex = index
 
 				return ve
 			}
 		}
 
 		lastLine = data
+		lastIndex = index
 
 		if buf != nil && buf.Len() < bufSize {
 			if _, err := buf.Write(data); err != nil {
@@ -80,7 +99,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			}
 		}
 
-		if err == nil && def.IndentStyle != "" && def.IndentStyle != "unset" {
+		if def.IndentStyle != "" && def.IndentStyle != "unset" {
 			if insideBlockComment && blockCommentEnd != nil {
 				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
 			}
@@ -102,43 +121,58 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			err = trimTrailingWhitespace(data)
 		}
 
-		// Enrich the error with the line number
-		if err != nil {
-			if ve, ok := err.(validationError); ok {
-				ve.line = data
-				ve.index = index
-				return ve
-			}
-			return err
+		if err == nil && maxLength > 0 && tabWidth > 0 {
+			err = maxLineLength(maxLength, tabWidth, data)
 		}
 
-		return nil
+		// Enrich the error with the line number
+		if ve, ok := err.(validationError); ok {
+			ve.line = data
+			ve.index = index
+			return ve
+		}
+
+		return err
 	})
 
 	if buf != nil && buf.Len() > 0 {
 		err := charset(def.Charset, buf.Bytes())
-		errs = append(errs, err)
+		if err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	if lastLine != nil && def.InsertFinalNewline != nil {
+		var err error
 		var lastChar byte
 		if len(lastLine) > 0 {
 			lastChar = lastLine[len(lastLine)-1]
 		}
 
-		if lastChar != 0x0 && lastChar != '\r' && lastChar != '\n' {
+		if lastChar != 0x0 && lastChar != cr && lastChar != lf {
 			if *def.InsertFinalNewline {
-				err := fmt.Errorf("missing the final newline")
-				errs = append(errs, err)
+				err = fmt.Errorf("missing the final newline")
 			}
 		} else {
 			if def.EndOfLine != "" {
-				err := endOfLine(def.EndOfLine, lastLine)
-				errs = append(errs, err)
+				err = endOfLine(def.EndOfLine, lastLine)
 			}
 
-			if !*def.InsertFinalNewline {
-				err := fmt.Errorf("found an extraneous final newline")
+			if err != nil {
+				if !*def.InsertFinalNewline {
+					err = fmt.Errorf("found an extraneous final newline")
+				} else {
+					err = nil
+				}
+			}
+		}
+
+		if err != nil {
+			if ve, ok := err.(validationError); ok {
+				ve.line = lastLine
+				ve.index = lastIndex
+				errs = append(errs, ve)
+			} else {
 				errs = append(errs, err)
 			}
 		}

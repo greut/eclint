@@ -35,7 +35,7 @@ func walk(paths ...string) ([]string, error) {
 			}
 			mode := i.Mode()
 			if mode.IsRegular() && !mode.IsDir() {
-				log.V(4).Info("index %s\n", p)
+				log.V(4).Info("index %s", p)
 				files = append(files, p)
 			}
 			return nil
@@ -88,7 +88,12 @@ func main() {
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.BoolVar(&noColors, "no_colors", false, "enable or disable colors")
 	flag.BoolVar(&summary, "summary", false, "enable the summary view")
-	flag.BoolVar(&showAllErrors, "show_all_errors", false, fmt.Sprintf("display all errors for each file (otherwise %d are kept)", showErrorQuantity))
+	flag.BoolVar(
+		&showAllErrors,
+		"show_all_errors",
+		false,
+		fmt.Sprintf("display all errors for each file (otherwise %d are kept)", showErrorQuantity),
+	)
 	flag.StringVar(&exclude, "exclude", "", "paths to exclude")
 	flag.Parse()
 
@@ -138,7 +143,9 @@ func main() {
 				if ve, ok := err.(validationError); ok {
 					log.V(4).Info("lint error", "error", ve)
 					if !summary {
-						fmt.Fprintf(stdout, "%s:%s: %s\n", au.Green(strconv.Itoa(ve.index)), au.Green(strconv.Itoa(ve.position)), ve.error)
+						vi := au.Green(strconv.Itoa(ve.index))
+						vp := au.Green(strconv.Itoa(ve.position))
+						fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.error)
 						l, err := errorAt(au, ve.line, ve.position-1)
 						if err != nil {
 							log.Error(err, "line formating failure", "error", ve)
@@ -152,7 +159,10 @@ func main() {
 				}
 
 				if d >= showErrorQuantity && len(errs) > d {
-					fmt.Fprintln(stdout, fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errs)-d))))
+					fmt.Fprintln(
+						stdout,
+						fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errs)-d))),
+					)
 					break
 				}
 
@@ -182,13 +192,14 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	}
 
 	for i := 0; i < position; i++ {
-		if line[i] != '\r' && line[i] != '\n' {
+		if line[i] != cr && line[i] != lf {
 			if err := b.WriteByte(line[i]); err != nil {
 				return "", err
 			}
 		}
 	}
 
+	// XXX this will break every non latin1 line.
 	s := " "
 	if position < len(line)-1 {
 		s = string(line[position : position+1])
@@ -198,7 +209,7 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	}
 
 	for i := position + 1; i < len(line); i++ {
-		if line[i] != '\r' && line[i] != '\n' {
+		if line[i] != cr && line[i] != lf {
 			if err := b.WriteByte(line[i]); err != nil {
 				return "", err
 			}

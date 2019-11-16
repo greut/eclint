@@ -25,10 +25,14 @@ $ eclint -exclude "testdata/**/*"
 - `indent_size`
 - `indent_style`
 - `insert_final_newline`
+- `max_line_length` (when using tabs, specify the `tab_width` or `indent_size`)
 - `trim_trailing_whitespace`
-- [domain-specific properties](https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties)
+- [domain-specific properties][dsl]
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`
+
+### More
+
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
@@ -69,3 +73,5 @@ The methodology is to run the linter against some big repositories `time $(eclin
 - [golangci-lint](https://github.com/golangci/golangci-lint), Go linters
 - [goreleaser](https://goreleaser.com/)
 - [klogr](https://github.com/kubernetes/klog/tree/master/klogr)
+
+[dsl]: https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties

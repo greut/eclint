@@ -14,13 +14,13 @@ type lineFunc func(int, []byte) error
 func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 	i := 0
 	for i < len(data) {
-		if data[i] == '\r' {
+		if data[i] == cr {
 			i++
-			if i < len(data) && data[i] == '\n' {
+			if i < len(data) && data[i] == lf {
 				i++
 			}
 			return i, data[0:i], nil
-		} else if data[i] == '\n' {
+		} else if data[i] == lf {
 			i++
 			return i, data[0:i], nil
 		}
@@ -40,7 +40,9 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 
 // readLines consumes the reader and emit each line via the lineFunc
 //
-// Line numbering starts at 1
+// Line numbering starts at 1. Scanner is pretty smart an will reuse
+// its memory structure. This is somehing we explicitly avoid by copying
+// the content to a new slice.
 func readLines(r io.Reader, fn lineFunc) []error {
 	errs := make([]error, 0)
 	sc := bufio.NewScanner(r)
@@ -48,7 +50,9 @@ func readLines(r io.Reader, fn lineFunc) []error {
 
 	i := 1
 	for sc.Scan() {
-		line := sc.Bytes()
+		l := sc.Bytes()
+		line := make([]byte, len(l))
+		copy(line, l)
 		if err := fn(i, line); err != nil {
 			errs = append(errs, err)
 		}
