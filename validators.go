@@ -7,6 +7,13 @@ import (
 	"github.com/gogs/chardet"
 )
 
+const (
+	cr    = '\r'
+	lf    = '\n'
+	tab   = '\t'
+	space = ' '
+)
+
 // validationError is a rich type containing information about the error
 type validationError struct {
 	error    string
@@ -14,6 +21,10 @@ type validationError struct {
 	line     []byte
 	index    int
 	position int
+}
+
+func (e validationError) String() string {
+	return e.Error()
 }
 
 // Error builds the error string.
@@ -25,21 +36,21 @@ func (e validationError) Error() string {
 func endOfLine(eol string, data []byte) error {
 	switch eol {
 	case "lf":
-		if !bytes.HasSuffix(data, []byte{'\n'}) || bytes.HasSuffix(data, []byte{'\r', '\n'}) {
+		if !bytes.HasSuffix(data, []byte{lf}) || bytes.HasSuffix(data, []byte{cr, lf}) {
 			return validationError{
 				error:    "line does not end with lf (`\\n`)",
 				position: len(data),
 			}
 		}
 	case "crlf":
-		if !bytes.HasSuffix(data, []byte{'\r', '\n'}) {
+		if !bytes.HasSuffix(data, []byte{cr, lf}) {
 			return validationError{
 				error:    "line does not end with crlf (`\\r\\n`)",
 				position: len(data),
 			}
 		}
 	case "cr":
-		if !bytes.HasSuffix(data, []byte{'\r'}) {
+		if !bytes.HasSuffix(data, []byte{cr}) {
 			return validationError{
 				error:    "line does not end with cr (`\\r`)",
 				position: len(data),
@@ -100,7 +111,7 @@ func charset(charset string, data []byte) error {
 				return nil
 			}
 		default:
-			return fmt.Errorf("%q is an invalid value for charset or should have been detected using its BOM already", charset)
+			return fmt.Errorf("charset %q is invalid or should have been detected using its BOM already", charset)
 		}
 	}
 
@@ -119,11 +130,11 @@ func indentStyle(style string, size int, data []byte) error {
 	var x byte
 	switch style {
 	case "space":
-		c = ' '
-		x = '\t'
+		c = space
+		x = tab
 	case "tab":
-		c = '\t'
-		x = ' '
+		c = tab
+		x = space
 		size = 1
 	case "unset":
 		return nil
@@ -141,7 +152,7 @@ func indentStyle(style string, size int, data []byte) error {
 				position: i + 1,
 			}
 		}
-		if data[i] == '\r' || data[i] == '\n' || (size > 0 && i%size == 0) {
+		if data[i] == cr || data[i] == lf || (size > 0 && i%size == 0) {
 			break
 		}
 		return validationError{
@@ -156,10 +167,10 @@ func indentStyle(style string, size int, data []byte) error {
 // trimTrailingWhitespace
 func trimTrailingWhitespace(data []byte) error {
 	for i := len(data) - 1; i >= 0; i-- {
-		if data[i] == '\r' || data[i] == '\n' {
+		if data[i] == cr || data[i] == lf {
 			continue
 		}
-		if data[i] == ' ' || data[i] == '\t' {
+		if data[i] == space || data[i] == tab {
 			return validationError{
 				error:    "line has some trailing whitespaces",
 				position: i + 1,
@@ -173,7 +184,7 @@ func trimTrailingWhitespace(data []byte) error {
 // isBlockCommentStart tells you when a block comment started on this line
 func isBlockCommentStart(start []byte, data []byte) bool {
 	for i := 0; i < len(data); i++ {
-		if data[i] == ' ' || data[i] == '\t' {
+		if data[i] == space || data[i] == tab {
 			continue
 		}
 		return bytes.HasPrefix(data[i:], start)
@@ -184,12 +195,12 @@ func isBlockCommentStart(start []byte, data []byte) bool {
 // checkBlockComment checks the line is a valid block comment
 func checkBlockComment(i int, prefix []byte, data []byte) error {
 	for ; i < len(data); i++ {
-		if data[i] == ' ' || data[i] == '\t' {
+		if data[i] == space || data[i] == tab {
 			continue
 		}
 		if !bytes.HasPrefix(data[i:], prefix) {
 			return validationError{
-				error:    fmt.Sprintf("the block_comment prefix %q was expected inside a block comment", string(prefix)),
+				error:    fmt.Sprintf("block_comment prefix %q was expected inside a block comment", string(prefix)),
 				position: i + 1,
 			}
 		}
@@ -201,10 +212,38 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 // isBlockCommentEnd tells you when a block comment end on this line
 func isBlockCommentEnd(end []byte, data []byte) bool {
 	for i := len(data) - 1; i > 0; i-- {
-		if data[i] == '\r' || data[i] == '\n' {
+		if data[i] == cr || data[i] == lf {
 			continue
 		}
 		return bytes.HasSuffix(data[:i], end)
 	}
 	return false
+}
+
+// maxLineLength checks the length of a given line
+func maxLineLength(maxLength int, tabWidth int, data []byte) error {
+	length := 0
+	breakingPosition := 0
+	for i := 0; i < len(data); i++ {
+		if data[i] == cr || data[i] == lf {
+			break
+		}
+		if data[i] == tab {
+			length += tabWidth
+		} else {
+			length++
+		}
+		if length > maxLength && breakingPosition == 0 {
+			breakingPosition = i
+		}
+	}
+
+	if length > maxLength {
+		return validationError{
+			error:    fmt.Sprintf("line is too long (%d > %d)", length+1, maxLength),
+			position: breakingPosition,
+		}
+	}
+
+	return nil
 }

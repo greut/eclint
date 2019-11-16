@@ -87,7 +87,7 @@ func TestCharset(t *testing.T) {
 			r := bytes.NewReader(tc.File)
 			for _, err := range validate(r, l, def) {
 				if err != nil {
-					t.Errorf("no errors where expected, got %s", err)
+					t.Errorf("no errors were expected, got %s", err)
 				}
 			}
 		})
@@ -120,7 +120,7 @@ func TestEndOfLine(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
 			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
+				t.Errorf("no errors were expected, got %s", err)
 			}
 		})
 	}
@@ -221,7 +221,7 @@ func TestTrimTrailingWhitespace(t *testing.T) {
 			t.Parallel()
 			err := trimTrailingWhitespace(tc.Line)
 			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
+				t.Errorf("no errors were expected, got %s", err)
 			}
 		})
 	}
@@ -292,7 +292,7 @@ func TestIndentStyle(t *testing.T) {
 			t.Parallel()
 			err := indentStyle(tc.IndentStyle, tc.IndentSize, tc.Line)
 			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
+				t.Errorf("no errors were expected, got %s", err)
 			}
 		})
 	}
@@ -369,7 +369,79 @@ func TestCheckBlockComment(t *testing.T) {
 			t.Parallel()
 			err := checkBlockComment(tc.Position, tc.Prefix, tc.Line)
 			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
+				t.Errorf("no errors were expected, got %s", err)
+			}
+		})
+	}
+}
+
+func TestMaxLineLength(t *testing.T) {
+	tests := []struct {
+		Name          string
+		MaxLineLength int
+		TabWidth      int
+		Line          []byte
+	}{
+		{
+			Name:          "no limits",
+			MaxLineLength: 0,
+			TabWidth:      0,
+			Line:          []byte("\r\n"),
+		}, {
+			Name:          "some limit",
+			MaxLineLength: 1,
+			TabWidth:      0,
+			Line:          []byte(".\r\n"),
+		}, {
+			Name:          "some limit",
+			MaxLineLength: 10,
+			TabWidth:      0,
+			Line:          []byte("0123456789\n"),
+		}, {
+			Name:          "tabs",
+			MaxLineLength: 5,
+			TabWidth:      2,
+			Line:          []byte("\t\t.\n"),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := maxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
+			if err != nil {
+				t.Errorf("no errors were expected, got %s", err)
+			}
+		})
+	}
+}
+
+func TestMaxLineLengthFailure(t *testing.T) {
+	tests := []struct {
+		Name          string
+		MaxLineLength int
+		TabWidth      int
+		Line          []byte
+	}{
+		{
+			Name:          "small limit",
+			MaxLineLength: 1,
+			TabWidth:      1,
+			Line:          []byte("..\r\n"),
+		}, {
+			Name:          "small limit and tab",
+			MaxLineLength: 2,
+			TabWidth:      2,
+			Line:          []byte("\t.\r\n"),
+		},
+	}
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+			err := maxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
+			if err == nil {
+				t.Error("an error was expected")
 			}
 		})
 	}
