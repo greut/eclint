@@ -15,8 +15,11 @@ import (
 // DefaultTabWidth sets the width of a tab used when counting the line length
 const DefaultTabWidth = 8
 
+// UnsetValue is the value equivalent to an empty / unset one.
+const UnsetValue = "unset"
+
 // validate is where the validations rules are applied
-func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error { //nolint:gocyclo
+func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error { //nolint:funlen,gocyclo
 	var buf *bytes.Buffer
 	// chardet uses a 8192 bytebuf for detection
 	bufSize := 8192
@@ -30,17 +33,17 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	var blockCommentStart []byte
 	var blockComment []byte
 	var blockCommentEnd []byte
-	if def.IndentStyle != "" && def.IndentStyle != "unset" {
+	if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
 		bs, ok := def.Raw["block_comment_start"]
-		if ok && bs != "" && bs != "unset" {
+		if ok && bs != "" && bs != UnsetValue {
 			blockCommentStart = []byte(bs)
 			bc, ok := def.Raw["block_comment"]
-			if ok && bc != "" && bs != "unset" {
+			if ok && bc != "" && bs != UnsetValue {
 				blockComment = []byte(bc)
 			}
 
 			be, ok := def.Raw["block_comment_end"]
-			if !ok || be == "" || be == "unset" {
+			if !ok || be == "" || be == UnsetValue {
 				return []error{fmt.Errorf("block_comment_end was expected, none were found")}
 			}
 			blockCommentEnd = []byte(be)
@@ -49,7 +52,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 
 	maxLength := 0
 	tabWidth := def.TabWidth
-	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != "unset" {
+	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != UnsetValue {
 		ml, err := strconv.Atoi(mll)
 		if err != nil || ml < 0 {
 			return []error{fmt.Errorf("max_line_length expected a non-negative number, got %s", mll)}
@@ -99,7 +102,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			}
 		}
 
-		if def.IndentStyle != "" && def.IndentStyle != "unset" {
+		if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
 			if insideBlockComment && blockCommentEnd != nil {
 				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
 			}
@@ -202,9 +205,9 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 				}
 				def.TabWidth = i
 			case "trim_trailing_whitespace":
-				return fmt.Errorf("%v cannot be overriden yet, pr welcome", nk)
+				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
 			case "insert_final_newline":
-				return fmt.Errorf("%v cannot be overriden yet, pr welcome", nk)
+				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
 			}
 		}
 	}

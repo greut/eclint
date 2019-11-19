@@ -7,21 +7,31 @@ linters-settings:
 linters:
   enable:
     - deadcode
+    - depguard
+    - dogsled
     - dupl
     - errcheck
+    - funlen
+    - gochecknoglobals
+    - gochecknoinits
+    - goconst
     - gocritic
     - gocyclo
     - goimports
     - golint
-    - gosimple
-    - govet
+    - gosec
     - ineffassign
+    - interfacer
+    - lll
+    - maligned
     - megacheck
+    - misspell
     - nakedret
+    - prealloc
     - scopelint
-    - staticcheck
     - structcheck
+    - unconvert
     - unused
     - varcheck
-    - gosec
+    - whitespace
   disable-all: true
