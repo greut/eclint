@@ -1,4 +1,4 @@
-package main
+package eclint
 
 import (
 	"fmt"
@@ -17,7 +17,7 @@ const (
 func TestListFiles(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
-	fs, err := listFiles(l, d)
+	fs, err := ListFiles(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +45,7 @@ func TestListFilesNoArgs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := listFiles(l)
+	fs, err := ListFiles(l)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +78,7 @@ func TestListFilesNoGit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := listFiles(l)
+	fs, err := ListFiles(l)
 	if err != nil {
 		t.Fatal(err)
 	}

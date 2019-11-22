@@ -1,4 +1,4 @@
-package main
+package eclint
 
 import (
 	"bytes"
@@ -9,7 +9,7 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// listFiles returns the list of files based on the input.
+// ListFiles returns the list of files based on the input.
 //
 // When its empty, it relies on `git ls-files` first, which
 // whould fail if `git` is not present or the current working
@@ -17,7 +17,7 @@ import (
 // current working directory.
 //
 // When args are given, it recursively walks into them.
-func listFiles(log logr.Logger, args ...string) ([]string, error) {
+func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 	if len(args) == 0 {
 		fs, err := gitLsFiles(log, ".")
 		if err == nil {

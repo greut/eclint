@@ -6,6 +6,7 @@ before:
 builds:
 - id: eclint
   binary: eclint
+  main: ./cmd/eclint/main.go
   goos:
   - linux
   - darwin
