@@ -14,6 +14,14 @@ const (
 	space = ' '
 )
 
+var (
+	utf8Bom    = []byte{0xef, 0xbb, 0xbf} // nolint:gochecknoglobals
+	utf16leBom = []byte{0xff, 0xfe}       // nolint:gochecknoglobals
+	utf16beBom = []byte{0xfe, 0xff}       // nolint:gochecknoglobals
+	utf32leBom = []byte{0xff, 0xfe, 0, 0} // nolint:gochecknoglobals
+	utf32beBom = []byte{0, 0, 0xfe, 0xff} // nolint:gochecknoglobals
+)
+
 // validationError is a rich type containing information about the error
 type validationError struct {
 	error    string
@@ -63,37 +71,25 @@ func endOfLine(eol string, data []byte) error {
 	return nil
 }
 
-// charsetUsingBOM checks the charset via the first bytes of the first line
-func charsetUsingBOM(charset string, data []byte) (bool, error) {
-	switch charset {
-	case "utf-8 bom":
-		if !bytes.HasPrefix(data, []byte{0xef, 0xbb, 0xbf}) {
-			return false, validationError{error: "no UTF-8 BOM were found"}
-		}
-	case "utf-16le":
-		if !bytes.HasPrefix(data, []byte{0xff, 0xfe}) {
-			return false, validationError{error: "no UTF-16LE BOM were found"}
-		}
-	case "utf-16be":
-		if !bytes.HasPrefix(data, []byte{0xfe, 0xff}) {
-			return false, validationError{error: "no UTF-16BE BOM were found"}
-		}
-	case "utf-32le":
-		if !bytes.HasPrefix(data, []byte{0xff, 0xfe, 0, 0}) {
-			return false, validationError{error: "no UTF-32LE BOM were found"}
-		}
-	case "utf-32be":
-		if !bytes.HasPrefix(data, []byte{0, 0, 0xfe, 0xff}) {
-			return false, validationError{error: "no UTF-32BE BOM were found"}
-		}
-	default:
-		return false, nil
+// detectCharsetUsingBOM checks the charset via the first bytes of the first line
+func detectCharsetUsingBOM(data []byte) string {
+	switch {
+	case bytes.HasPrefix(data, utf32leBom):
+		return "utf-32le"
+	case bytes.HasPrefix(data, utf32beBom):
+		return "utf-32be"
+	case bytes.HasPrefix(data, utf16leBom):
+		return "utf-16le"
+	case bytes.HasPrefix(data, utf16beBom):
+		return "utf-16be"
+	case bytes.HasPrefix(data, utf8Bom):
+		return "utf-8 bom"
 	}
-	return true, nil
+	return ""
 }
 
-// charset checks the file encoding
-func charset(charset string, data []byte) error {
+// detectCharset checks the file encoding
+func detectCharset(charset string, data []byte) error {
 	d := chardet.NewTextDetector()
 	results, err := d.DetectAll(data)
 	if err != nil {
@@ -117,7 +113,8 @@ func charset(charset string, data []byte) error {
 
 	if len(results) > 0 {
 		return validationError{
-			error: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
+			error:    fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
+			position: 1,
 		}
 	}
 
@@ -228,9 +225,12 @@ func maxLineLength(maxLength int, tabWidth int, data []byte) error {
 		if data[i] == cr || data[i] == lf {
 			break
 		}
-		if data[i] == tab {
+		switch {
+		case data[i] == tab:
 			length += tabWidth
-		} else {
+		case (data[i] >> 6) == 0b10:
+			// skip 0x10xxxxxx that are UTF-8 continuation markers
+		default:
 			length++
 		}
 		if length > maxLength && breakingPosition == 0 {
@@ -240,8 +240,8 @@ func maxLineLength(maxLength int, tabWidth int, data []byte) error {
 
 	if length > maxLength {
 		return validationError{
-			error:    fmt.Sprintf("line is too long (%d > %d)", length+1, maxLength),
-			position: breakingPosition,
+			error:    fmt.Sprintf("line is too long (%d > %d)", length, maxLength),
+			position: breakingPosition + 1,
 		}
 	}
 

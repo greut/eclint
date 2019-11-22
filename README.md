@@ -26,6 +26,8 @@ $ eclint -exclude "testdata/**/*"
 - `indent_style`
 - `insert_final_newline`
 - `max_line_length` (when using tabs, specify the `tab_width` or `indent_size`)
+    - by default, UTF-8 charset is assumed and multi-byte characters should be
+    counted as one. However, combining characters won't.
 - `trim_trailing_whitespace`
 - [domain-specific properties][dsl]
     - `line_comment`
@@ -44,7 +46,7 @@ $ eclint -exclude "testdata/**/*"
 ## Missing features
 
 - basic `//nolint` [suffix](https://github.com/golangci/golangci-lint#nolint)
-- doing checks on `rune` rather than `byte`
+- `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
 - ability to fix
 - etc.

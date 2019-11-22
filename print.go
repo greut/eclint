@@ -81,6 +81,11 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 			if err := b.WriteByte(line[i]); err != nil {
 				return "", err
 			}
+
+			// skip 0x10xxxxxx that are UTF-8 continuation markers
+			if (line[i] >> 6) == 0b10 {
+				position++
+			}
 		}
 	}
 
@@ -97,6 +102,10 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 		if line[i] != cr && line[i] != lf {
 			if err := b.WriteByte(line[i]); err != nil {
 				return "", err
+			}
+
+			if (line[i] >> 6) == 0b10 {
+				position++
 			}
 		}
 	}
