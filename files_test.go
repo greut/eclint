@@ -1,4 +1,4 @@
-package eclint
+package eclint_test
 
 import (
 	"fmt"
@@ -6,6 +6,7 @@ import (
 	"testing"
 
 	tlogr "github.com/go-logr/logr/testing"
+	"gitlab.com/greut/eclint"
 )
 
 const (
@@ -17,7 +18,7 @@ const (
 func TestListFiles(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
-	fs, err := ListFiles(l, d)
+	fs, err := eclint.ListFiles(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,7 +46,7 @@ func TestListFilesNoArgs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := ListFiles(l)
+	fs, err := eclint.ListFiles(l)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,7 +79,7 @@ func TestListFilesNoGit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := ListFiles(l)
+	fs, err := eclint.ListFiles(l)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -90,7 +91,7 @@ func TestListFilesNoGit(t *testing.T) {
 func TestWalk(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
-	fs, err := walk(l, d)
+	fs, err := eclint.Walk(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -103,7 +104,7 @@ func TestGitLsFiles(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
 
-	fs, err := gitLsFiles(l, d)
+	fs, err := eclint.GitLsFiles(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -121,7 +122,7 @@ func TestGitLsFilesFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = gitLsFiles(l, d)
+	_, err = eclint.GitLsFiles(l, d)
 	if err == nil {
 		t.Error("an error was expected")
 	}

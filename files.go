@@ -19,7 +19,7 @@ import (
 // When args are given, it recursively walks into them.
 func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 	if len(args) == 0 {
-		fs, err := gitLsFiles(log, ".")
+		fs, err := GitLsFiles(log, ".")
 		if err == nil {
 			return fs, nil
 		}
@@ -28,11 +28,11 @@ func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 		args = append(args, ".")
 	}
 
-	return walk(log, args...)
+	return Walk(log, args...)
 }
 
-// walk iterates on each path item recursively.
-func walk(log logr.Logger, paths ...string) ([]string, error) {
+// Walk iterates on each path item recursively.
+func Walk(log logr.Logger, paths ...string) ([]string, error) {
 	files := make([]string, 0)
 	for _, path := range paths {
 		err := filepath.Walk(path, func(p string, i os.FileInfo, e error) error {
@@ -53,11 +53,11 @@ func walk(log logr.Logger, paths ...string) ([]string, error) {
 	return files, nil
 }
 
-// gitLsFiles returns the list of file based on what is in the git index.
+// GitLsFiles returns the list of file based on what is in the git index.
 //
 // -z is mandatory as some repositories non-ASCII file names which creates
 // quoted and escaped file names.
-func gitLsFiles(log logr.Logger, path string) ([]string, error) {
+func GitLsFiles(log logr.Logger, path string) ([]string, error) {
 	output, err := exec.Command("git", "ls-files", "-z", path).Output()
 	if err != nil {
 		return nil, err
