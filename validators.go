@@ -113,8 +113,7 @@ func detectCharset(charset string, data []byte) error {
 
 	if len(results) > 0 {
 		return validationError{
-			error:    fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
-			position: 1,
+			error: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
 		}
 	}
 
@@ -146,7 +145,7 @@ func indentStyle(style string, size int, data []byte) error {
 		if data[i] == x {
 			return validationError{
 				error:    fmt.Sprintf("indentation style mismatch expected %q (%s) got %q", c, style, x),
-				position: i + 1,
+				position: i,
 			}
 		}
 		if data[i] == cr || data[i] == lf || (size > 0 && i%size == 0) {
@@ -154,7 +153,7 @@ func indentStyle(style string, size int, data []byte) error {
 		}
 		return validationError{
 			error:    fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
-			position: i + 1,
+			position: i,
 		}
 	}
 
@@ -170,7 +169,7 @@ func trimTrailingWhitespace(data []byte) error {
 		if data[i] == space || data[i] == tab {
 			return validationError{
 				error:    "line has some trailing whitespaces",
-				position: i + 1,
+				position: i,
 			}
 		}
 		break
@@ -198,7 +197,7 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 		if !bytes.HasPrefix(data[i:], prefix) {
 			return validationError{
 				error:    fmt.Sprintf("block_comment prefix %q was expected inside a block comment", string(prefix)),
-				position: i + 1,
+				position: i,
 			}
 		}
 		break
@@ -245,7 +244,7 @@ func MaxLineLength(maxLength int, tabWidth int, data []byte) error {
 	if length > maxLength {
 		return validationError{
 			error:    fmt.Sprintf("line is too long (%d > %d)", length, maxLength),
-			position: breakingPosition + 1,
+			position: breakingPosition,
 		}
 	}
 

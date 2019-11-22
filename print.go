@@ -26,10 +26,10 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 			if ve, ok := err.(validationError); ok {
 				log.V(4).Info("lint error", "error", ve)
 				if !opt.Summary {
-					vi := au.Green(strconv.Itoa(ve.index))
-					vp := au.Green(strconv.Itoa(ve.position))
+					vi := au.Green(strconv.Itoa(ve.index + 1))
+					vp := au.Green(strconv.Itoa(ve.position + 1))
 					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.error)
-					l, err := errorAt(au, ve.line, ve.position-1)
+					l, err := errorAt(au, ve.line, ve.position)
 					if err != nil {
 						log.Error(err, "line formating failure", "error", ve)
 						return err

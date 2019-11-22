@@ -64,18 +64,18 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		}
 	}
 
-	errs := readLines(r, func(index int, data []byte) error {
+	errs := ReadLines(r, func(index int, data []byte) error {
 		var err error
 
 		// The first line may contain the BOM for detecting some encodings
-		if index == 1 {
+		if index == 0 {
 			if def.Charset != "utf-8" && def.Charset != "latin1" {
 				charset = detectCharsetUsingBOM(data)
 
 				if def.Charset != "" && charset != def.Charset {
 					return validationError{
 						error:    fmt.Sprintf("no %s prefix were found (got %q)", def.Charset, charset),
-						position: 1,
+						position: 0,
 						index:    index,
 						line:     data,
 					}
@@ -136,7 +136,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		if err == nil && maxLength > 0 && tabWidth > 0 {
 			// Remove any BOM from the first line.
 			d := data
-			if index == 1 && charset != "" {
+			if index == 0 && charset != "" {
 				for _, bom := range [][]byte{utf8Bom} {
 					if bytes.HasPrefix(data, bom) {
 						d = data[len(utf8Bom):]

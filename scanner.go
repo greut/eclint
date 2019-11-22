@@ -5,13 +5,13 @@ import (
 	"io"
 )
 
-// lineFunc is the callback for a line.
+// LineFunc is the callback for a line.
 //
 // It returns the line number starting from zero.
-type lineFunc func(int, []byte) error
+type LineFunc func(int, []byte) error
 
-// splitLines works like bufio.ScanLines while keeping the line endings.
-func splitLines(data []byte, atEOF bool) (int, []byte, error) {
+// SplitLines works like bufio.ScanLines while keeping the line endings.
+func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 	i := 0
 	for i < len(data) {
 		if data[i] == cr {
@@ -38,17 +38,17 @@ func splitLines(data []byte, atEOF bool) (int, []byte, error) {
 	return 0, nil, io.EOF
 }
 
-// readLines consumes the reader and emit each line via the lineFunc
+// ReadLines consumes the reader and emit each line via the LineFunc
 //
-// Line numbering starts at 1. Scanner is pretty smart an will reuse
+// Line numbering starts at 0. Scanner is pretty smart an will reuse
 // its memory structure. This is somehing we explicitly avoid by copying
 // the content to a new slice.
-func readLines(r io.Reader, fn lineFunc) []error {
+func ReadLines(r io.Reader, fn LineFunc) []error {
 	errs := make([]error, 0)
 	sc := bufio.NewScanner(r)
-	sc.Split(splitLines)
+	sc.Split(SplitLines)
 
-	i := 1
+	i := 0
 	for sc.Scan() {
 		l := sc.Bytes()
 		line := make([]byte, len(l))
