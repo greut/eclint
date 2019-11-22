@@ -8,34 +8,6 @@ import (
 	tlogr "github.com/go-logr/logr/testing"
 )
 
-func TestCharsetUsingBOMFailure(t *testing.T) {
-	tests := []struct {
-		Charset string
-	}{
-		{
-			Charset: "utf-8 bom",
-		}, {
-			Charset: "utf-16le",
-		}, {
-			Charset: "utf-16be",
-		}, {
-			Charset: "utf-32le",
-		}, {
-			Charset: "utf-32be",
-		},
-	}
-	for _, tc := range tests {
-		tc := tc
-		t.Run(tc.Charset, func(t *testing.T) {
-			t.Parallel()
-			ok, err := charsetUsingBOM(tc.Charset, []byte{})
-			if ok || err == nil {
-				t.Error("an error was expected")
-			}
-		})
-	}
-}
-
 func TestCharset(t *testing.T) {
 	tests := []struct {
 		Name    string
@@ -78,7 +50,7 @@ func TestCharset(t *testing.T) {
 	for _, tc := range tests {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
-			//t.Parallel()
+			t.Parallel()
 
 			def := &editorconfig.Definition{
 				Charset: tc.Charset,
@@ -402,6 +374,11 @@ func TestMaxLineLength(t *testing.T) {
 			MaxLineLength: 5,
 			TabWidth:      2,
 			Line:          []byte("\t\t.\n"),
+		}, {
+			Name:          "utf-8 encoded characters",
+			MaxLineLength: 1,
+			TabWidth:      0,
+			Line:          []byte("é\n"),
 		},
 	}
 	for _, tc := range tests {

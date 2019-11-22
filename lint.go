@@ -26,6 +26,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
+	var charset string
 	var lastLine []byte
 	var lastIndex int
 
@@ -67,13 +68,21 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		var err error
 
 		// The first line may contain the BOM for detecting some encodings
-		if index == 1 && def.Charset != "" {
-			ok, err := charsetUsingBOM(def.Charset, data)
-			if err != nil {
-				return err
+		if index == 1 {
+			if def.Charset != "utf-8" && def.Charset != "latin1" {
+				charset = detectCharsetUsingBOM(data)
+
+				if def.Charset != "" && charset != def.Charset {
+					return validationError{
+						error:    fmt.Sprintf("no %s prefix were found (got %q)", def.Charset, charset),
+						position: 1,
+						index:    index,
+						line:     data,
+					}
+				}
 			}
 
-			if !ok {
+			if charset == "" && def.Charset != "" {
 				buf = bytes.NewBuffer(make([]byte, 0))
 			}
 		}
@@ -125,7 +134,17 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		}
 
 		if err == nil && maxLength > 0 && tabWidth > 0 {
-			err = maxLineLength(maxLength, tabWidth, data)
+			// Remove any BOM from the first line.
+			d := data
+			if index == 1 && charset != "" {
+				for _, bom := range [][]byte{utf8Bom} {
+					if bytes.HasPrefix(data, bom) {
+						d = data[len(utf8Bom):]
+						break
+					}
+				}
+			}
+			err = maxLineLength(maxLength, tabWidth, d)
 		}
 
 		// Enrich the error with the line number
@@ -139,7 +158,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	})
 
 	if buf != nil && buf.Len() > 0 {
-		err := charset(def.Charset, buf.Bytes())
+		err := detectCharset(def.Charset, buf.Bytes())
 		if err != nil {
 			errs = append(errs, err)
 		}
