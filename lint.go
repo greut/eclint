@@ -1,4 +1,4 @@
-package main
+package eclint
 
 import (
 	"bytes"
@@ -144,7 +144,7 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 					}
 				}
 			}
-			err = maxLineLength(maxLength, tabWidth, d)
+			err = MaxLineLength(maxLength, tabWidth, d)
 		}
 
 		// Enrich the error with the line number
@@ -233,7 +233,8 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 	return nil
 }
 
-func lint(filename string, log logr.Logger) []error {
+// Lint does the hard work of validating the given file.
+func Lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)

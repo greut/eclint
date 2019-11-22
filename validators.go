@@ -1,4 +1,4 @@
-package main
+package eclint
 
 import (
 	"bytes"
@@ -217,8 +217,12 @@ func isBlockCommentEnd(end []byte, data []byte) bool {
 	return false
 }
 
-// maxLineLength checks the length of a given line
-func maxLineLength(maxLength int, tabWidth int, data []byte) error {
+// MaxLineLength checks the length of a given line.
+//
+// It assumes UTF-8 and will count as one runes. The first byte has no prefix
+// 0xxxxxxx, 110xxxxx, 1110xxxx, 11110xxx, 111110xx, etc. and the following byte
+// the 10xxxxxx prefix which are skipped.
+func MaxLineLength(maxLength int, tabWidth int, data []byte) error {
 	length := 0
 	breakingPosition := 0
 	for i := 0; i < len(data); i++ {

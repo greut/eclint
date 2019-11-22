@@ -1,71 +1,66 @@
-package main
+package eclint
 
 import (
 	"bytes"
 	"fmt"
-	"runtime"
 	"strconv"
 
 	"github.com/logrusorgru/aurora"
-	"github.com/mattn/go-colorable"
 )
 
-// lintAndPrint is the rich output of the program.
-func lintAndPrint(opt option, filename string) int {
-	c := 0
-	d := 0
+// PrintErrors is the rich output of the program.
+func PrintErrors(opt Option, filename string, errors []error) error {
+	counter := 0
 
-	stdout := opt.stdout
-	if runtime.GOOS == "windows" {
-		stdout = colorable.NewColorableStdout()
-	}
+	log := opt.Log
+	stdout := opt.Stdout
 
-	au := aurora.NewAurora(opt.isTerminal && !opt.noColors)
-	errs := lint(filename, opt.log)
-	for _, err := range errs {
+	au := aurora.NewAurora(opt.IsTerminal && !opt.NoColors)
+
+	for _, err := range errors {
 		if err != nil {
-			if d == 0 && !opt.summary {
+			if counter == 0 && !opt.Summary {
 				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename))
 			}
 
 			if ve, ok := err.(validationError); ok {
-				opt.log.V(4).Info("lint error", "error", ve)
-				if !opt.summary {
+				log.V(4).Info("lint error", "error", ve)
+				if !opt.Summary {
 					vi := au.Green(strconv.Itoa(ve.index))
 					vp := au.Green(strconv.Itoa(ve.position))
 					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.error)
 					l, err := errorAt(au, ve.line, ve.position-1)
 					if err != nil {
-						opt.log.Error(err, "line formating failure", "error", ve)
-						continue
+						log.Error(err, "line formating failure", "error", ve)
+						return err
 					}
 					fmt.Fprintln(stdout, l)
 				}
 			} else {
-				opt.log.V(4).Info("lint error", "filename", filename, "error", err)
+				log.V(4).Info("lint error", "filename", filename, "error", err)
 				fmt.Fprintln(stdout, err)
 			}
 
-			if d >= opt.showErrorQuantity && len(errs) > d {
+			if counter >= opt.ShowErrorQuantity && len(errors) > counter {
 				fmt.Fprintln(
 					stdout,
-					fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errs)-d))),
+					fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errors)-counter))),
 				)
 				break
 			}
 
-			d++
-			c++
+			counter++
 		}
 	}
-	if d > 0 {
-		if !opt.summary {
+
+	if counter > 0 {
+		if !opt.Summary {
 			fmt.Fprintln(stdout, "")
 		} else {
-			fmt.Fprintf(stdout, "%s: %d errors\n", au.Magenta(filename), d)
+			fmt.Fprintf(stdout, "%s: %d errors\n", au.Magenta(filename), counter)
 		}
 	}
-	return c
+	return nil
 }
 
 // errorAt highlights the validationError position within the line.

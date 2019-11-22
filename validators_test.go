@@ -1,4 +1,4 @@
-package main
+package eclint
 
 import (
 	"bytes"
@@ -385,7 +385,7 @@ func TestMaxLineLength(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			err := maxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
+			err := MaxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
 			if err != nil {
 				t.Errorf("no errors were expected, got %s", err)
 			}
@@ -416,7 +416,7 @@ func TestMaxLineLengthFailure(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			err := maxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
+			err := MaxLineLength(tc.MaxLineLength, tc.TabWidth, tc.Line)
 			if err == nil {
 				t.Error("an error was expected")
 			}
