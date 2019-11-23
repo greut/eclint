@@ -147,13 +147,13 @@ func TestEndOfLineFailures(t *testing.T) { //nolint:funlen
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
-			ve, ok := err.(validationError)
+			ve, ok := err.(ValidationError)
 			if tc.Position >= 0 {
 				if !ok {
-					t.Errorf("a validationError was expected, got %v", err)
+					t.Errorf("a ValidationError was expected, got %t", err)
 				}
-				if tc.Position != ve.position {
-					t.Errorf("position mismatch %d, got %d", tc.Position, ve.position)
+				if tc.Position != ve.Position {
+					t.Errorf("position mismatch %d, got %d", tc.Position, ve.Position)
 				}
 			} else if err == nil {
 				t.Error("an error was expected")
@@ -379,6 +379,16 @@ func TestMaxLineLength(t *testing.T) {
 			MaxLineLength: 1,
 			TabWidth:      0,
 			Line:          []byte("é\n"),
+		}, {
+			Name:          "utf-8 emojis",
+			MaxLineLength: 7,
+			TabWidth:      0,
+			Line:          []byte("🐵 🙈 🙉 🙊\r\n"),
+		}, {
+			Name:          "VMWare Inc, Globalization Team super string",
+			MaxLineLength: 17,
+			TabWidth:      0,
+			Line:          []byte("表ポあA鷗ŒéＢ逍Üßªąñ丂㐀𠀀\r"),
 		},
 	}
 	for _, tc := range tests {

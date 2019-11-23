@@ -22,22 +22,22 @@ var (
 	utf32beBom = []byte{0, 0, 0xfe, 0xff} // nolint:gochecknoglobals
 )
 
-// validationError is a rich type containing information about the error
-type validationError struct {
-	error    string
-	filename string
-	line     []byte
-	index    int
-	position int
+// ValidationError is a rich type containing information about the error
+type ValidationError struct {
+	Message  string
+	Filename string
+	Line     []byte
+	Index    int
+	Position int
 }
 
-func (e validationError) String() string {
+func (e ValidationError) String() string {
 	return e.Error()
 }
 
 // Error builds the error string.
-func (e validationError) Error() string {
-	return fmt.Sprintf("%d:%d: %s", e.index, e.position, e.error)
+func (e ValidationError) Error() string {
+	return fmt.Sprintf("%s:%d:%d: %s", e.Filename, e.Index+1, e.Position+1, e.Message)
 }
 
 // endOfLines checks the line ending
@@ -45,23 +45,23 @@ func endOfLine(eol string, data []byte) error {
 	switch eol {
 	case "lf":
 		if !bytes.HasSuffix(data, []byte{lf}) || bytes.HasSuffix(data, []byte{cr, lf}) {
-			return validationError{
-				error:    "line does not end with lf (`\\n`)",
-				position: len(data),
+			return ValidationError{
+				Message:  "line does not end with lf (`\\n`)",
+				Position: len(data),
 			}
 		}
 	case "crlf":
 		if !bytes.HasSuffix(data, []byte{cr, lf}) {
-			return validationError{
-				error:    "line does not end with crlf (`\\r\\n`)",
-				position: len(data),
+			return ValidationError{
+				Message:  "line does not end with crlf (`\\r\\n`)",
+				Position: len(data),
 			}
 		}
 	case "cr":
 		if !bytes.HasSuffix(data, []byte{cr}) {
-			return validationError{
-				error:    "line does not end with cr (`\\r`)",
-				position: len(data),
+			return ValidationError{
+				Message:  "line does not end with cr (`\\r`)",
+				Position: len(data),
 			}
 		}
 	default:
@@ -112,8 +112,8 @@ func detectCharset(charset string, data []byte) error {
 	}
 
 	if len(results) > 0 {
-		return validationError{
-			error: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
+		return ValidationError{
+			Message: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
 		}
 	}
 
@@ -143,17 +143,17 @@ func indentStyle(style string, size int, data []byte) error {
 			continue
 		}
 		if data[i] == x {
-			return validationError{
-				error:    fmt.Sprintf("indentation style mismatch expected %q (%s) got %q", c, style, x),
-				position: i,
+			return ValidationError{
+				Message:  fmt.Sprintf("indentation style mismatch expected %q (%s) got %q", c, style, x),
+				Position: i,
 			}
 		}
 		if data[i] == cr || data[i] == lf || (size > 0 && i%size == 0) {
 			break
 		}
-		return validationError{
-			error:    fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
-			position: i,
+		return ValidationError{
+			Message:  fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
+			Position: i,
 		}
 	}
 
@@ -167,9 +167,9 @@ func trimTrailingWhitespace(data []byte) error {
 			continue
 		}
 		if data[i] == space || data[i] == tab {
-			return validationError{
-				error:    "line has some trailing whitespaces",
-				position: i,
+			return ValidationError{
+				Message:  "line has some trailing whitespaces",
+				Position: i,
 			}
 		}
 		break
@@ -195,9 +195,9 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 			continue
 		}
 		if !bytes.HasPrefix(data[i:], prefix) {
-			return validationError{
-				error:    fmt.Sprintf("block_comment prefix %q was expected inside a block comment", string(prefix)),
-				position: i,
+			return ValidationError{
+				Message:  fmt.Sprintf("block_comment prefix %q was expected inside a block comment", string(prefix)),
+				Position: i,
 			}
 		}
 		break
@@ -242,9 +242,9 @@ func MaxLineLength(maxLength int, tabWidth int, data []byte) error {
 	}
 
 	if length > maxLength {
-		return validationError{
-			error:    fmt.Sprintf("line is too long (%d > %d)", length, maxLength),
-			position: breakingPosition,
+		return ValidationError{
+			Message:  fmt.Sprintf("line is too long (%d > %d)", length, maxLength),
+			Position: breakingPosition,
 		}
 	}
 
