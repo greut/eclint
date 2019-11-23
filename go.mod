@@ -6,8 +6,8 @@ require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.2.1
 	github.com/go-logr/logr v0.1.0
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
-	github.com/logrusorgru/aurora v0.0.0-20191017060258-dc85c304c434
+	github.com/logrusorgru/aurora v0.0.0-20191116043053-66b7ad493a23
 	github.com/mattn/go-colorable v0.1.4
-	golang.org/x/crypto v0.0.0-20190308221718-c2843e01d9a2
+	golang.org/x/crypto v0.0.0-20191122220453-ac88ee75c92c
 	k8s.io/klog/v2 v2.0.0-20191023130815-8422fac62d1e
 )

@@ -2,10 +2,12 @@ image: golang:1.13
 
 variables:
   GORELEASER_IMAGE: goreleaser/goreleaser:latest
+  NANCY_VERSION: v0.0.36
 
 stages:
   - test
   - lint
+  - check
   - snapshot
 
 go test:
@@ -25,6 +27,20 @@ golangci-lint:
   image: golangci/golangci-lint
   script:
     - golangci-lint run -v
+
+nancy:
+  stage: check
+  script:
+    - curl -sL -o nancy
+      "https://github.com/sonatype-nexus-community/nancy/releases/download/${NANCY_VERSION}/nancy-linux.amd64-${NANCY_VERSION}"
+    - chmod +x nancy
+    - ./nancy go.sum
+
+go-mod-outdated:
+  stage: check
+  script:
+    - go get -u github.com/psampaz/go-mod-outdated
+    - go list -u -m -json all | $GOPATH/bin/go-mod-outdated -update -direct -ci
 
 goreleaser snapshot:
   stage: snapshot
