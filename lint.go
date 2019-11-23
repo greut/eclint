@@ -73,11 +73,11 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 				charset = detectCharsetUsingBOM(data)
 
 				if def.Charset != "" && charset != def.Charset {
-					return validationError{
-						error:    fmt.Sprintf("no %s prefix were found (got %q)", def.Charset, charset),
-						position: 0,
-						index:    index,
-						line:     data,
+					return ValidationError{
+						Message:  fmt.Sprintf("no %s prefix were found (got %q)", def.Charset, charset),
+						Position: 0,
+						Index:    index,
+						Line:     data,
 					}
 				}
 			}
@@ -91,9 +91,9 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		if lastLine != nil && def.EndOfLine != "" {
 			err = endOfLine(def.EndOfLine, lastLine)
 			// XXX not so nice hack
-			if ve, ok := err.(validationError); ok {
-				ve.line = lastLine
-				ve.index = lastIndex
+			if ve, ok := err.(ValidationError); ok {
+				ve.Line = lastLine
+				ve.Index = lastIndex
 
 				lastLine = data
 				lastIndex = index
@@ -119,8 +119,8 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 			err = indentStyle(def.IndentStyle, indentSize, data)
 			if err != nil && insideBlockComment && blockComment != nil {
 				// The indentation may fail within a block comment.
-				if ve, ok := err.(validationError); ok {
-					err = checkBlockComment(ve.position-1, blockComment, data)
+				if ve, ok := err.(ValidationError); ok {
+					err = checkBlockComment(ve.Position, blockComment, data)
 				}
 			}
 
@@ -148,9 +148,9 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		}
 
 		// Enrich the error with the line number
-		if ve, ok := err.(validationError); ok {
-			ve.line = data
-			ve.index = index
+		if ve, ok := err.(ValidationError); ok {
+			ve.Line = data
+			ve.Index = index
 			return ve
 		}
 
@@ -190,9 +190,9 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 		}
 
 		if err != nil {
-			if ve, ok := err.(validationError); ok {
-				ve.line = lastLine
-				ve.index = lastIndex
+			if ve, ok := err.(ValidationError); ok {
+				ve.Line = lastLine
+				ve.Index = lastIndex
 				errs = append(errs, ve)
 			} else {
 				errs = append(errs, err)
@@ -258,8 +258,8 @@ func Lint(filename string, log logr.Logger) []error {
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
-		if ve, ok := err.(validationError); ok {
-			ve.filename = filename
+		if ve, ok := err.(ValidationError); ok {
+			ve.Filename = filename
 			errs[i] = ve
 		} else if err != nil {
 			errs[i] = fmt.Errorf("%s:%w", filename, err)

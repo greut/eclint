@@ -23,13 +23,13 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename))
 			}
 
-			if ve, ok := err.(validationError); ok {
+			if ve, ok := err.(ValidationError); ok {
 				log.V(4).Info("lint error", "error", ve)
 				if !opt.Summary {
-					vi := au.Green(strconv.Itoa(ve.index + 1))
-					vp := au.Green(strconv.Itoa(ve.position + 1))
-					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.error)
-					l, err := errorAt(au, ve.line, ve.position)
+					vi := au.Green(strconv.Itoa(ve.Index + 1))
+					vp := au.Green(strconv.Itoa(ve.Position + 1))
+					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.Message)
+					l, err := errorAt(au, ve.Line, ve.Position)
 					if err != nil {
 						log.Error(err, "line formating failure", "error", ve)
 						return err
@@ -41,15 +41,15 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 				fmt.Fprintln(stdout, err)
 			}
 
-			if counter >= opt.ShowErrorQuantity && len(errors) > counter {
+			counter++
+
+			if opt.ShowErrorQuantity > 0 && counter >= opt.ShowErrorQuantity && len(errors) > counter {
 				fmt.Fprintln(
 					stdout,
 					fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errors)-counter))),
 				)
 				break
 			}
-
-			counter++
 		}
 	}
 
@@ -63,7 +63,7 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 	return nil
 }
 
-// errorAt highlights the validationError position within the line.
+// errorAt highlights the ValidationError position within the line.
 func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	b := bytes.NewBuffer(make([]byte, len(line)))
 

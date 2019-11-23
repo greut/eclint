@@ -45,6 +45,12 @@ func main() { //nolint:funlen
 		false,
 		fmt.Sprintf("display all errors for each file (otherwise %d are kept)", opt.ShowErrorQuantity),
 	)
+	flag.IntVar(
+		&opt.ShowErrorQuantity,
+		"show_error_quantity",
+		opt.ShowErrorQuantity,
+		"display only the first n errors (0 means all)",
+	)
 	flag.StringVar(&opt.Exclude, "exclude", "", "paths to exclude")
 	flag.Parse()
 
@@ -66,7 +72,7 @@ func main() { //nolint:funlen
 
 	if opt.Summary {
 		opt.ShowAllErrors = true
-		opt.ShowErrorQuantity = int(^uint(0) >> 1)
+		opt.ShowErrorQuantity = 0
 	}
 
 	c := 0
