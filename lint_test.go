@@ -8,6 +8,7 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	tlogr "github.com/go-logr/logr/testing"
+	"github.com/rakyll/magicmime"
 )
 
 func utf16le(s string) []byte {
@@ -88,7 +89,7 @@ without a final newline.`),
 func TestLintSimple(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, err := range Lint("testdata/simple/simple.txt", l) {
+	for _, err := range Lint("testdata/simple/simple.txt", false, l) {
 		if err != nil {
 			t.Errorf("no errors where expected, got %s", err)
 		}
@@ -98,7 +99,7 @@ func TestLintSimple(t *testing.T) {
 func TestLintMissing(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	errs := Lint("testdata/missing/file", l)
+	errs := Lint("testdata/missing/file", false, l)
 	if len(errs) == 0 {
 		t.Error("an error was expected, got none")
 	}
@@ -113,7 +114,38 @@ func TestLintMissing(t *testing.T) {
 func TestLintInvalid(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	errs := Lint("testdata/invalid/.editorconfig", l)
+	errs := Lint("testdata/invalid/.editorconfig", false, l)
+	if len(errs) == 0 {
+		t.Error("an error was expected, got none")
+	}
+
+	for _, err := range errs {
+		if err == nil {
+			t.Error("an error was expected")
+		}
+	}
+}
+
+func TestLintMime(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	if err := magicmime.Open(magicmime.MAGIC_NONE); err != nil {
+		t.Fatalf("magic mime is needed. %s", err)
+	}
+	defer magicmime.Close()
+
+	errs := Lint("testdata/images/editorconfig-logo.png", true, l)
+	for _, err := range errs {
+		if err != nil {
+			t.Errorf("no errors where expected, got %s", err)
+		}
+	}
+}
+
+func TestLintMimeFailure(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	errs := Lint("testdata/images/editorconfig-logo.png", false, l)
 	if len(errs) == 0 {
 		t.Error("an error was expected, got none")
 	}

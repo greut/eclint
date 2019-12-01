@@ -42,6 +42,7 @@ $ eclint -exclude "testdata/**/*"
 - colored output _à la_ ripgrep (use `-no_colors` to disable)
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
+- magic number file detection via `libmagic`
 
 ## Missing features
 
