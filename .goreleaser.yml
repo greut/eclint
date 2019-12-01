@@ -9,11 +9,10 @@ builds:
   main: ./cmd/eclint/main.go
   goos:
   - linux
-  - darwin
   goarch:
   - amd64
   env:
-  - CGO_ENABLED=0
+  - CGO_ENABLED=1
 archives:
 - replacements:
     386: i386

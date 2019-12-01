@@ -11,6 +11,7 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/mattn/go-colorable"
+	"github.com/rakyll/magicmime"
 	"gitlab.com/greut/eclint"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
@@ -75,6 +76,14 @@ func main() { //nolint:funlen
 		opt.ShowErrorQuantity = 0
 	}
 
+	hasMime := true
+	if err := magicmime.Open(magicmime.MAGIC_NONE); err != nil {
+		hasMime = false
+		log.V(1).Info("mimetype check is disabled", "error", err)
+	} else {
+		defer magicmime.Close()
+	}
+
 	c := 0
 	for _, filename := range files {
 		// Skip excluded files
@@ -90,7 +99,7 @@ func main() { //nolint:funlen
 			}
 		}
 
-		errs := eclint.Lint(filename, opt.Log)
+		errs := eclint.Lint(filename, hasMime, opt.Log)
 		c += len(errs)
 		err := eclint.PrintErrors(opt, filename, errs)
 		if err != nil {

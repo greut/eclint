@@ -1,6 +1,7 @@
 package eclint
 
 import (
+	"bufio"
 	"bytes"
 	"fmt"
 	"io"
@@ -10,6 +11,7 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
+	"github.com/rakyll/magicmime"
 )
 
 // DefaultTabWidth sets the width of a tab used when counting the line length
@@ -234,7 +236,7 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 }
 
 // Lint does the hard work of validating the given file.
-func Lint(filename string, log logr.Logger) []error {
+func Lint(filename string, checkMime bool, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
@@ -254,7 +256,26 @@ func Lint(filename string, log logr.Logger) []error {
 		return []error{err}
 	}
 
-	errs := validate(fp, log, def)
+	r := bufio.NewReader(fp)
+
+	if checkMime {
+		buf, err := r.Peek(512)
+		if err != nil && err != io.EOF {
+			return []error{err}
+		}
+
+		typ, err := magicmime.TypeByBuffer(buf)
+		if err != nil {
+			return []error{err}
+		}
+
+		if !strings.HasSuffix(typ, "text") && typ != "data" {
+			log.V(2).Info("skipping file", "filename", filename, "mime", typ)
+			return nil
+		}
+	}
+
+	errs := validate(r, log, def)
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
