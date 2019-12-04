@@ -8,7 +8,9 @@ builds:
   binary: eclint
   main: ./cmd/eclint/main.go
   goos:
+  - darwin
   - linux
+  - windows
   goarch:
   - amd64
   env:

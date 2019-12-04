@@ -11,6 +11,6 @@ require (
 	github.com/mattn/go-colorable v0.1.4
 	github.com/rakyll/magicmime v0.1.0
 	github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709 // indirect
-	golang.org/x/crypto v0.0.0-20191128160524-b544559bb6d1
+	golang.org/x/crypto v0.0.0-20191202143827-86a70503ff7e
 	k8s.io/klog/v2 v2.0.0-20191023130815-8422fac62d1e
 )

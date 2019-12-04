@@ -12,6 +12,7 @@ import (
 type Option struct {
 	IsTerminal        bool
 	NoColors          bool
+	NoMagic           bool
 	ShowAllErrors     bool
 	Summary           bool
 	ShowErrorQuantity int
