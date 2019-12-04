@@ -8,7 +8,6 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	tlogr "github.com/go-logr/logr/testing"
-	"github.com/rakyll/magicmime"
 )
 
 func utf16le(s string) []byte {
@@ -129,10 +128,10 @@ func TestLintInvalid(t *testing.T) {
 func TestLintMime(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	if err := magicmime.Open(magicmime.MAGIC_NONE); err != nil {
+	if err := LoadMime(); err != nil {
 		t.Fatalf("magic mime is needed. %s", err)
 	}
-	defer magicmime.Close()
+	defer UnloadMime()
 
 	errs := Lint("testdata/images/editorconfig-logo.png", true, l)
 	for _, err := range errs {

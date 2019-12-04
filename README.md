@@ -39,10 +39,10 @@ $ eclint -exclude "testdata/**/*"
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
 - [Docker images](https://hub.docker.com/r/greut/eclint)
-- colored output _à la_ ripgrep (use `-no_colors` to disable)
+- colored output _à la_ ripgrep (use `-no_colors` to disable, or `-force_colors` to skip detection)
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
-- magic number file detection via `libmagic`
+- magic number file detection via `libmagic` (disabe with `-no_magic`)
 
 ## Missing features
 
