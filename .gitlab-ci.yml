@@ -11,9 +11,7 @@ stages:
   - snapshot
 
 before_script:
-  - apk --update add
-    curl docker-cli file-dev gcc git libmagic musl-dev
-    || echo ":D"
+  - apk --update add curl docker-cli git || echo ":D"
 
 go test:
   stage: test

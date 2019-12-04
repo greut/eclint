@@ -27,7 +27,7 @@ func main() { //nolint:funlen
 	opt := eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
-		IsTerminal:        terminal.IsTerminal(int(syscall.Stdout)),
+		IsTerminal:        terminal.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
 		Log:               log,
 	}
 
@@ -40,7 +40,6 @@ func main() { //nolint:funlen
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.BoolVar(&opt.NoColors, "no_colors", false, "disable color support detection")
 	flag.BoolVar(&forceColors, "force_colors", false, "force colors")
-	flag.BoolVar(&opt.NoMagic, "no_magic", false, "enable or disable libmagic")
 	flag.BoolVar(&opt.Summary, "summary", false, "enable the summary view")
 	flag.BoolVar(
 		&opt.ShowAllErrors,
@@ -83,15 +82,6 @@ func main() { //nolint:funlen
 		opt.ShowErrorQuantity = 0
 	}
 
-	if !opt.NoMagic {
-		if err := eclint.LoadMime(); err != nil {
-			opt.NoMagic = true
-			log.V(2).Info("mimetype check is disabled", "error", err)
-		} else {
-			defer eclint.UnloadMime()
-		}
-	}
-
 	c := 0
 	for _, filename := range files {
 		// Skip excluded files
@@ -107,7 +97,7 @@ func main() { //nolint:funlen
 			}
 		}
 
-		errs := eclint.Lint(filename, !opt.NoMagic, opt.Log)
+		errs := eclint.Lint(filename, opt.Log)
 		c += len(errs)
 		err := eclint.PrintErrors(opt, filename, errs)
 		if err != nil {
