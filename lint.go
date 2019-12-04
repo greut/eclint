@@ -235,7 +235,7 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 }
 
 // Lint does the hard work of validating the given file.
-func Lint(filename string, checkMime bool, log logr.Logger) []error {
+func Lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
@@ -256,25 +256,6 @@ func Lint(filename string, checkMime bool, log logr.Logger) []error {
 	}
 
 	r := bufio.NewReader(fp)
-
-	if checkMime {
-		buf, err := r.Peek(512)
-		if err != nil && err != io.EOF {
-			return []error{err}
-		}
-
-		if len(buf) > 0 {
-			typ, err := TypeByBuffer(buf)
-			if err != nil {
-				return []error{err}
-			}
-
-			if !strings.HasSuffix(typ, "text") && typ != "data" {
-				log.V(2).Info("skipping file", "filename", filename, "mime", typ)
-				return nil
-			}
-		}
-	}
 
 	errs := validate(r, log, def)
 

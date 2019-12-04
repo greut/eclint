@@ -88,7 +88,7 @@ without a final newline.`),
 func TestLintSimple(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, err := range Lint("testdata/simple/simple.txt", false, l) {
+	for _, err := range Lint("testdata/simple/simple.txt", l) {
 		if err != nil {
 			t.Errorf("no errors where expected, got %s", err)
 		}
@@ -98,7 +98,7 @@ func TestLintSimple(t *testing.T) {
 func TestLintMissing(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	errs := Lint("testdata/missing/file", false, l)
+	errs := Lint("testdata/missing/file", l)
 	if len(errs) == 0 {
 		t.Error("an error was expected, got none")
 	}
@@ -113,38 +113,7 @@ func TestLintMissing(t *testing.T) {
 func TestLintInvalid(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	errs := Lint("testdata/invalid/.editorconfig", false, l)
-	if len(errs) == 0 {
-		t.Error("an error was expected, got none")
-	}
-
-	for _, err := range errs {
-		if err == nil {
-			t.Error("an error was expected")
-		}
-	}
-}
-
-func TestLintMime(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	if err := LoadMime(); err != nil {
-		t.Fatalf("magic mime is needed. %s", err)
-	}
-	defer UnloadMime()
-
-	errs := Lint("testdata/images/editorconfig-logo.png", true, l)
-	for _, err := range errs {
-		if err != nil {
-			t.Errorf("no errors where expected, got %s", err)
-		}
-	}
-}
-
-func TestLintMimeFailure(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	errs := Lint("testdata/images/editorconfig-logo.png", false, l)
+	errs := Lint("testdata/invalid/.editorconfig", l)
 	if len(errs) == 0 {
 		t.Error("an error was expected, got none")
 	}
