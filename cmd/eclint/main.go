@@ -22,6 +22,7 @@ var (
 
 func main() { //nolint:funlen
 	flagVersion := false
+	forceColors := false
 	log := klogr.New()
 	opt := eclint.Option{
 		Stdout:            os.Stdout,
@@ -37,7 +38,8 @@ func main() { //nolint:funlen
 	// Flags
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
-	flag.BoolVar(&opt.NoColors, "no_colors", false, "enable or disable colors")
+	flag.BoolVar(&opt.NoColors, "no_colors", false, "disable color support detection")
+	flag.BoolVar(&forceColors, "force_colors", false, "force colors")
 	flag.BoolVar(&opt.NoMagic, "no_magic", false, "enable or disable libmagic")
 	flag.BoolVar(&opt.Summary, "summary", false, "enable the summary view")
 	flag.BoolVar(
@@ -58,6 +60,11 @@ func main() { //nolint:funlen
 	if flagVersion {
 		fmt.Fprintf(opt.Stdout, "eclint %s\n", version)
 		return
+	}
+
+	if forceColors {
+		opt.NoColors = false
+		opt.IsTerminal = true
 	}
 
 	args := flag.Args()
