@@ -11,7 +11,6 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/mattn/go-colorable"
-	"github.com/rakyll/magicmime"
 	"gitlab.com/greut/eclint"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
@@ -27,7 +26,7 @@ func main() { //nolint:funlen
 	opt := eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
-		IsTerminal:        terminal.IsTerminal(syscall.Stdout),
+		IsTerminal:        terminal.IsTerminal(int(syscall.Stdout)),
 		Log:               log,
 	}
 
@@ -39,6 +38,7 @@ func main() { //nolint:funlen
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.BoolVar(&opt.NoColors, "no_colors", false, "enable or disable colors")
+	flag.BoolVar(&opt.NoMagic, "no_magic", false, "enable or disable libmagic")
 	flag.BoolVar(&opt.Summary, "summary", false, "enable the summary view")
 	flag.BoolVar(
 		&opt.ShowAllErrors,
@@ -76,12 +76,13 @@ func main() { //nolint:funlen
 		opt.ShowErrorQuantity = 0
 	}
 
-	hasMime := true
-	if err := magicmime.Open(magicmime.MAGIC_NONE); err != nil {
-		hasMime = false
-		log.V(1).Info("mimetype check is disabled", "error", err)
-	} else {
-		defer magicmime.Close()
+	if !opt.NoMagic {
+		if err := eclint.LoadMime(); err != nil {
+			opt.NoMagic = true
+			log.V(2).Info("mimetype check is disabled", "error", err)
+		} else {
+			defer eclint.UnloadMime()
+		}
 	}
 
 	c := 0
@@ -99,7 +100,7 @@ func main() { //nolint:funlen
 			}
 		}
 
-		errs := eclint.Lint(filename, hasMime, opt.Log)
+		errs := eclint.Lint(filename, !opt.NoMagic, opt.Log)
 		c += len(errs)
 		err := eclint.PrintErrors(opt, filename, errs)
 		if err != nil {

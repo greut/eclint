@@ -11,7 +11,6 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
-	"github.com/rakyll/magicmime"
 )
 
 // DefaultTabWidth sets the width of a tab used when counting the line length
@@ -264,14 +263,16 @@ func Lint(filename string, checkMime bool, log logr.Logger) []error {
 			return []error{err}
 		}
 
-		typ, err := magicmime.TypeByBuffer(buf)
-		if err != nil {
-			return []error{err}
-		}
+		if len(buf) > 0 {
+			typ, err := TypeByBuffer(buf)
+			if err != nil {
+				return []error{err}
+			}
 
-		if !strings.HasSuffix(typ, "text") && typ != "data" {
-			log.V(2).Info("skipping file", "filename", filename, "mime", typ)
-			return nil
+			if !strings.HasSuffix(typ, "text") && typ != "data" {
+				log.V(2).Info("skipping file", "filename", filename, "mime", typ)
+				return nil
+			}
 		}
 	}
 
