@@ -3,6 +3,7 @@ package eclint
 import (
 	"bytes"
 	"fmt"
+	"strings"
 
 	"github.com/gogs/chardet"
 )
@@ -88,36 +89,40 @@ func detectCharsetUsingBOM(data []byte) string {
 	return ""
 }
 
-// detectCharset checks the file encoding
-func detectCharset(charset string, data []byte) error {
+// detectCharset detects the file encoding
+func detectCharset(charset string, data []byte) (string, error) {
+	if charset == "" {
+		return charset, nil
+	}
+
 	d := chardet.NewTextDetector()
 	results, err := d.DetectAll(data)
 	if err != nil {
-		return fmt.Errorf("charset detection failure %s", err)
+		return "", fmt.Errorf("charset detection failure %s", err)
 	}
 
-	for _, result := range results {
-		switch charset {
-		case "utf-8":
-			if result.Charset == "UTF-8" {
-				return nil
+	for i, result := range results {
+		if strings.HasPrefix(result.Charset, "ISO-8859-") {
+			result.Charset = "ASCII"
+		}
+		switch result.Charset {
+		case "UTF-8":
+			return Utf8, nil
+		case "ASCII":
+			if charset == Utf8 {
+				return Utf8, nil
 			}
-		case "latin1":
-			if result.Charset == "ISO-8859-1" {
-				return nil
-			}
+			return "latin1", nil
 		default:
-			return fmt.Errorf("charset %q is invalid or should have been detected using its BOM already", charset)
+			if i == 0 {
+				charset = result.Charset
+			} else {
+				charset = fmt.Sprintf("%s,%s", charset, result.Charset)
+			}
 		}
 	}
 
-	if len(results) > 0 {
-		return ValidationError{
-			Message: fmt.Sprintf("detected charset %q does not match expected %q", results[0].Charset, charset),
-		}
-	}
-
-	return nil
+	return "", fmt.Errorf("got the following charset(s) %q which are not supported", charset)
 }
 
 // indentStyle checks that the line beginnings are either space or tabs
