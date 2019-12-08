@@ -57,7 +57,7 @@ func TestCharset(t *testing.T) {
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, l, def) {
+			for _, err := range validate(r, "utf-8", l, def) {
 				if err != nil {
 					t.Errorf("no errors were expected, got %s", err)
 				}

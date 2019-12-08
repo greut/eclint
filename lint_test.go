@@ -3,6 +3,7 @@ package eclint
 import (
 	"bytes"
 	"encoding/binary"
+	"fmt"
 	"testing"
 	"unicode/utf16"
 
@@ -58,7 +59,7 @@ without a final newline.`),
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, l, def) {
+			for _, err := range validate(r, "utf-8", l, def) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
@@ -76,7 +77,7 @@ without a final newline.`),
 
 			r := bytes.NewReader(tc.File)
 
-			for _, err := range validate(r, l, def) {
+			for _, err := range validate(r, "utf-8", l, def) {
 				if err == nil {
 					t.Error("an error was expected")
 				}
@@ -167,7 +168,7 @@ func TestBlockComment(t *testing.T) {
 			def.Raw["block_comment_end"] = tc.BlockCommentEnd
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, l, def) {
+			for _, err := range validate(r, "utf-8", l, def) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
@@ -211,7 +212,7 @@ func TestBlockCommentFailure(t *testing.T) {
 			def.Raw["block_comment_end"] = tc.BlockCommentEnd
 
 			r := bytes.NewReader(tc.File)
-			errs := validate(r, l, def)
+			errs := validate(r, "utf-8", l, def)
 			if len(errs) == 0 {
 				t.Errorf("one error was expected, got none")
 				return
@@ -220,5 +221,29 @@ func TestBlockCommentFailure(t *testing.T) {
 				t.Errorf("no errors where expected, got %s", errs[0])
 			}
 		})
+	}
+}
+
+func TestLintCharset(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"latin1", "utf8"} {
+		for _, err := range Lint(fmt.Sprintf("./testdata/charset/%s.txt", f), l) {
+			if err != nil {
+				t.Errorf("no errors where expected, got %s", err)
+			}
+		}
+	}
+}
+
+func TestLintImages(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"edcon_tool.png"} {
+		for _, err := range Lint(fmt.Sprintf("./testdata/images/%s", f), l) {
+			if err != nil {
+				t.Fatalf("no errors where expected, got %s", err)
+			}
+		}
 	}
 }

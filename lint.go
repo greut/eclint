@@ -16,18 +16,21 @@ import (
 // DefaultTabWidth sets the width of a tab used when counting the line length
 const DefaultTabWidth = 8
 
-// UnsetValue is the value equivalent to an empty / unset one.
-const UnsetValue = "unset"
+const (
+	// UnsetValue is the value equivalent to an empty / unset one.
+	UnsetValue = "unset"
+	// Utf8 is the ubiquitous character set
+	Utf8 = "utf-8"
+)
 
 // validate is where the validations rules are applied
-func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []error { //nolint:funlen,gocyclo
-	var buf *bytes.Buffer
-	// chardet uses a 8192 bytebuf for detection
-	bufSize := 8192
-
+func validate( //nolint:funlen,gocyclo
+	r io.Reader, charset string,
+	log logr.Logger,
+	def *editorconfig.Definition,
+) []error {
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
-	var charset string
 	var lastLine []byte
 	var lastIndex int
 
@@ -68,26 +71,6 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 	errs := ReadLines(r, func(index int, data []byte) error {
 		var err error
 
-		// The first line may contain the BOM for detecting some encodings
-		if index == 0 {
-			if def.Charset != "utf-8" && def.Charset != "latin1" {
-				charset = detectCharsetUsingBOM(data)
-
-				if def.Charset != "" && charset != def.Charset {
-					return ValidationError{
-						Message:  fmt.Sprintf("no %s prefix were found (got %q)", def.Charset, charset),
-						Position: 0,
-						Index:    index,
-						Line:     data,
-					}
-				}
-			}
-
-			if charset == "" && def.Charset != "" {
-				buf = bytes.NewBuffer(make([]byte, 0))
-			}
-		}
-
 		// The last line may not have the expected ending.
 		if lastLine != nil && def.EndOfLine != "" {
 			err = endOfLine(def.EndOfLine, lastLine)
@@ -105,12 +88,6 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 
 		lastLine = data
 		lastIndex = index
-
-		if buf != nil && buf.Len() < bufSize {
-			if _, err := buf.Write(data); err != nil {
-				log.Error(err, "cannot write into file buffer", "line", index)
-			}
-		}
 
 		if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
 			if insideBlockComment && blockCommentEnd != nil {
@@ -157,13 +134,6 @@ func validate(r io.Reader, log logr.Logger, def *editorconfig.Definition) []erro
 
 		return err
 	})
-
-	if buf != nil && buf.Len() > 0 {
-		err := detectCharset(def.Charset, buf.Bytes())
-		if err != nil {
-			errs = append(errs, err)
-		}
-	}
 
 	if lastLine != nil && def.InsertFinalNewline != nil {
 		var err error
@@ -234,6 +204,67 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 	return nil
 }
 
+// probeBinary tells if the reader is likely to be binary
+//
+// XXX checking for \0 is a weak strategy.
+func probeBinary(r io.ByteReader) (bool, error) {
+	for {
+		b, err := r.ReadByte()
+		if err != nil {
+			if err == io.EOF {
+				break
+			}
+			return false, err
+		}
+
+		// XXX This will fail for any utf-16, utf-32
+		// but they are detected sooner via the BOM.
+		if b == '\000' {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+
+func probeCharset(r *bufio.Reader, charset string) (string, error) {
+	buf, err := r.Peek(512)
+	if err != nil && err != io.EOF {
+		return "", err
+	}
+
+	// empty files are valid text files
+	if len(buf) == 0 {
+		return "", nil
+	}
+
+	var cs string
+	// The first line may contain the BOM for detecting some encodings
+	if charset != Utf8 && charset != "latin1" {
+		charset := detectCharsetUsingBOM(buf)
+
+		if charset != "" && cs != charset {
+			return "", ValidationError{
+				Message: fmt.Sprintf("no %s prefix were found (got %q)", charset, cs),
+			}
+		}
+	}
+
+	if cs == "" {
+		cs, err = detectCharset(charset, buf)
+		if err != nil {
+			return "", err
+		}
+
+		if charset != "" && charset != cs {
+			return "", ValidationError{
+				Message: fmt.Sprintf("detected charset %q does not match expected %q", cs, charset),
+			}
+		}
+	}
+
+	return cs, nil
+}
+
 // Lint does the hard work of validating the given file.
 func Lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
@@ -257,7 +288,26 @@ func Lint(filename string, log logr.Logger) []error {
 
 	r := bufio.NewReader(fp)
 
-	errs := validate(r, log, def)
+	charset, err := probeCharset(r, def.Charset)
+	if charset == "" {
+		ok, err := probeBinary(r)
+		if err != nil {
+			return []error{err}
+		}
+		if ok {
+			log.V(1).Info("binary file detected and skipped", "filename", filename)
+			return []error{}
+		}
+	} else {
+		log.V(2).Info("charset probed", "filename", filename, "charset", charset)
+	}
+
+	errs := []error{}
+	if err != nil {
+		errs = append(errs, err)
+	} else {
+		errs = validate(r, charset, log, def)
+	}
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
