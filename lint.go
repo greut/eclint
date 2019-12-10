@@ -244,7 +244,7 @@ func probeCharset(r *bufio.Reader, charset string) (string, error) {
 	var cs string
 	// The first line may contain the BOM for detecting some encodings
 	if charset != Utf8 && charset != "latin1" {
-		charset := detectCharsetUsingBOM(buf)
+		cs = detectCharsetUsingBOM(buf)
 
 		if charset != "" && cs != charset {
 			return "", ValidationError{
