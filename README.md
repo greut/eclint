@@ -64,8 +64,8 @@ The methodology is to run the linter against some big repositories `time $(eclin
 
 | Repository | `editorconfig-checker` | `eclint` |
 |------------|------------------------|----------|
-| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 14s |
-| [SaltStack](https://github.com/saltstack/salt) | 7s | 0.7s |
+| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 8s |
+| [SaltStack](https://github.com/saltstack/salt) | 7s | .5s |
 
 ## Libraries and tools
 
