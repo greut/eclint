@@ -35,15 +35,12 @@ func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 func Walk(log logr.Logger, paths ...string) ([]string, error) {
 	files := make([]string, 0)
 	for _, path := range paths {
-		err := filepath.Walk(path, func(p string, i os.FileInfo, e error) error {
+		err := filepath.Walk(path, func(p string, _ os.FileInfo, e error) error {
 			if e != nil {
 				return e
 			}
-			mode := i.Mode()
-			if mode.IsRegular() && !mode.IsDir() {
-				log.V(4).Info("index %s", p)
-				files = append(files, p)
-			}
+			log.V(2).Info("index %s", p)
+			files = append(files, p)
 			return nil
 		})
 		if err != nil {
@@ -56,7 +53,9 @@ func Walk(log logr.Logger, paths ...string) ([]string, error) {
 // GitLsFiles returns the list of file based on what is in the git index.
 //
 // -z is mandatory as some repositories non-ASCII file names which creates
-// quoted and escaped file names.
+// quoted and escaped file names. This method also returns directories for
+// any submodule there is. Submodule will be skipped afterwards and thus
+// not checked.
 func GitLsFiles(log logr.Logger, path string) ([]string, error) {
 	output, err := exec.Command("git", "ls-files", "-z", path).Output()
 	if err != nil {
@@ -68,7 +67,7 @@ func GitLsFiles(log logr.Logger, path string) ([]string, error) {
 	files := make([]string, len(fs)-1)
 	for i := 0; i < len(files); i++ {
 		p := string(fs[i])
-		log.V(4).Info("index %s", p)
+		log.V(2).Info("index %s", p)
 		files[i] = p
 	}
 	return files, nil

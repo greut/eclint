@@ -22,7 +22,7 @@ func TestListFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fs) != 2 {
+	if len(fs) != 5 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }
@@ -50,7 +50,7 @@ func TestListFilesNoArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fs) != 2 {
+	if len(fs) != 3 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }
@@ -83,7 +83,7 @@ func TestListFilesNoGit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fs) != 0 {
+	if len(fs) != 1 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }
@@ -95,7 +95,7 @@ func TestWalk(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fs) != 2 {
+	if len(fs) != 5 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }
@@ -108,7 +108,7 @@ func TestGitLsFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if len(fs) != 2 {
+	if len(fs) != 3 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }

@@ -130,14 +130,14 @@ func indentStyle(style string, size int, data []byte) error {
 	var c byte
 	var x byte
 	switch style {
-	case "space":
+	case SpaceValue:
 		c = space
 		x = tab
-	case "tab":
+	case TabValue:
 		c = tab
 		x = space
 		size = 1
-	case "unset":
+	case UnsetValue:
 		return nil
 	default:
 		return fmt.Errorf("%q is an invalid value of indent_style, want tab or space", style)

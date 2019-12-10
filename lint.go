@@ -19,6 +19,10 @@ const DefaultTabWidth = 8
 const (
 	// UnsetValue is the value equivalent to an empty / unset one.
 	UnsetValue = "unset"
+	// TabValue is the value representing tab indentation (the ugly one)
+	TabValue = "tab"
+	// SpaceValue is the value representing space indentation (the good one)
+	SpaceValue = "space"
 	// Utf8 is the ubiquitous character set
 	Utf8 = "utf-8"
 )
@@ -214,7 +218,7 @@ func probeBinary(r io.ByteReader) (bool, error) {
 			if err == io.EOF {
 				break
 			}
-			return false, err
+			return false, fmt.Errorf("cannot probe byte. %w", err)
 		}
 
 		// XXX This will fail for any utf-16, utf-32
@@ -265,6 +269,27 @@ func probeCharset(r *bufio.Reader, charset string) (string, error) {
 	return cs, nil
 }
 
+// probeReadable tries to read the file. When empty or a directory
+// it's considered non-readable with no errors. Otherwise the error
+// should be caught.
+func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
+	// Sanity check that the file can be read.
+	_, err := r.Peek(1)
+	if err != nil && err != io.EOF {
+		fi, err := fp.Stat()
+		if err != nil {
+			return false, err
+		}
+
+		if fi.IsDir() {
+			return false, nil
+		}
+
+		return false, err
+	}
+	return err != io.EOF, nil
+}
+
 // Lint does the hard work of validating the given file.
 func Lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
@@ -277,7 +302,7 @@ func Lint(filename string, log logr.Logger) []error {
 
 	fp, err := os.Open(filename)
 	if err != nil {
-		return []error{err}
+		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
 	}
 	defer fp.Close()
 
@@ -288,26 +313,31 @@ func Lint(filename string, log logr.Logger) []error {
 
 	r := bufio.NewReader(fp)
 
-	charset, err := probeCharset(r, def.Charset)
-	if charset == "" {
-		ok, err := probeBinary(r)
-		if err != nil {
-			return []error{err}
-		}
-		if ok {
-			log.V(1).Info("binary file detected and skipped", "filename", filename)
-			return []error{}
-		}
-	} else {
-		log.V(2).Info("charset probed", "filename", filename, "charset", charset)
+	ok, err := probeReadable(fp, r)
+	if err != nil {
+		return []error{fmt.Errorf("cannot read %s. %w", filename, err)}
+	}
+	if !ok {
+		log.V(2).Info("skipped unreadable or empty file", "filename", filename)
+		return nil
 	}
 
-	errs := []error{}
-	if err != nil {
-		errs = append(errs, err)
-	} else {
-		errs = validate(r, charset, log, def)
+	charset, err := probeCharset(r, def.Charset)
+	if charset == "" {
+		ok, er := probeBinary(r)
+		if er != nil {
+			return []error{fmt.Errorf("cannot probe binary. %w", er)}
+		}
+		if ok {
+			log.V(2).Info("binary file detected and skipped", "filename", filename)
+			return []error{}
+		}
+
+		return []error{err}
 	}
+
+	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
+	errs := validate(r, charset, log, def)
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
