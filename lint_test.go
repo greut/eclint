@@ -214,13 +214,35 @@ func TestBlockCommentFailure(t *testing.T) {
 			r := bytes.NewReader(tc.File)
 			errs := validate(r, "utf-8", l, def)
 			if len(errs) == 0 {
-				t.Errorf("one error was expected, got none")
-				return
+				t.Fatal("one error was expected, got none")
 			}
 			if errs[0] == nil {
 				t.Errorf("no errors where expected, got %s", errs[0])
 			}
 		})
+	}
+}
+
+func TestBlockCommentValidSpec(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"a", "b"} {
+		for _, err := range Lint(fmt.Sprintf("./testdata/block_comments/%s", f), l) {
+			if err != nil {
+				t.Fatalf("no errors where expected, got %s", err)
+			}
+		}
+	}
+}
+
+func TestBlockCommentInvalidSpec(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"c"} {
+		errs := Lint(fmt.Sprintf("./testdata/block_comments/%s", f), l)
+		if len(errs) == 0 {
+			t.Errorf("one error was expected, got none")
+		}
 	}
 }
 
@@ -278,5 +300,28 @@ func TestOverridingUsingPrefix(t *testing.T) {
 	}
 	if def.TabWidth != 4 {
 		t.Errorf("tab_width not changed, got %d", def.TabWidth)
+	}
+}
+
+func TestMaxLineLengthValidSpec(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"a", "b"} {
+		for _, err := range Lint(fmt.Sprintf("./testdata/max_line_length/%s", f), l) {
+			if err != nil {
+				t.Fatalf("no errors where expected, got %s", err)
+			}
+		}
+	}
+}
+
+func TestMaxLineLengthInvalidSpec(t *testing.T) {
+	l := tlogr.TestLogger{}
+
+	for _, f := range []string{"c"} {
+		errs := Lint(fmt.Sprintf("./testdata/max_line_length/%s", f), l)
+		if len(errs) == 0 {
+			t.Errorf("one error was expected, got none")
+		}
 	}
 }

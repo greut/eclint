@@ -39,7 +39,7 @@ func Walk(log logr.Logger, paths ...string) ([]string, error) {
 			if e != nil {
 				return e
 			}
-			log.V(2).Info("index %s", p)
+			log.V(2).Info("index", "filename", p)
 			files = append(files, p)
 			return nil
 		})
@@ -67,7 +67,7 @@ func GitLsFiles(log logr.Logger, path string) ([]string, error) {
 	files := make([]string, len(fs)-1)
 	for i := 0; i < len(files); i++ {
 		p := string(fs[i])
-		log.V(2).Info("index %s", p)
+		log.V(2).Info("index", "filename", p)
 		files[i] = p
 	}
 	return files, nil

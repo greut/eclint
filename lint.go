@@ -38,6 +38,8 @@ func validate( //nolint:funlen,gocyclo
 	var lastLine []byte
 	var lastIndex int
 
+	errs := make([]error, 0)
+
 	var insideBlockComment bool
 	var blockCommentStart []byte
 	var blockComment []byte
@@ -53,7 +55,7 @@ func validate( //nolint:funlen,gocyclo
 
 			be, ok := def.Raw["block_comment_end"]
 			if !ok || be == "" || be == UnsetValue {
-				return []error{fmt.Errorf("block_comment_end was expected, none were found")}
+				errs = append(errs, fmt.Errorf("block_comment_end was expected, none were found"))
 			}
 			blockCommentEnd = []byte(be)
 		}
@@ -64,7 +66,7 @@ func validate( //nolint:funlen,gocyclo
 	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != UnsetValue {
 		ml, err := strconv.Atoi(mll)
 		if err != nil || ml < 0 {
-			return []error{fmt.Errorf("max_line_length expected a non-negative number, got %s", mll)}
+			errs = append(errs, fmt.Errorf("max_line_length expected a non-negative number, got %q", mll))
 		}
 		maxLength = ml
 		if tabWidth <= 0 {
@@ -72,7 +74,11 @@ func validate( //nolint:funlen,gocyclo
 		}
 	}
 
-	errs := ReadLines(r, func(index int, data []byte) error {
+	if len(errs) > 0 {
+		return errs
+	}
+
+	errs = ReadLines(r, func(index int, data []byte) error {
 		var err error
 
 		// The last line may not have the expected ending.
@@ -323,6 +329,9 @@ func Lint(filename string, log logr.Logger) []error {
 	}
 
 	charset, err := probeCharset(r, def.Charset)
+	if err != nil {
+		return []error{err}
+	}
 	if charset == "" {
 		ok, er := probeBinary(r)
 		if er != nil {
@@ -330,10 +339,8 @@ func Lint(filename string, log logr.Logger) []error {
 		}
 		if ok {
 			log.V(2).Info("binary file detected and skipped", "filename", filename)
-			return []error{}
+			return nil
 		}
-
-		return []error{err}
 	}
 
 	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
@@ -345,7 +352,7 @@ func Lint(filename string, log logr.Logger) []error {
 			ve.Filename = filename
 			errs[i] = ve
 		} else if err != nil {
-			errs[i] = fmt.Errorf("%s:%w", filename, err)
+			errs[i] = err
 		}
 	}
 
