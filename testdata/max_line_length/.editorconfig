@@ -1,0 +1,11 @@
+root = true
+
+[a]
+max_line_length = 99
+
+; ok
+[b]
+max_line_length = 0
+
+[c]
+max_line_length = a

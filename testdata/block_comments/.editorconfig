@@ -1,0 +1,20 @@
+root = true
+
+[*]
+indent_style = tab
+indent_size = 2
+
+# okay cases
+[a]
+block_comment_start = /*
+block_comment = *
+block_comment_end = */
+
+[b]
+block_comment_start = /*
+block_comment_end = */
+
+# this should break
+[c]
+block_comment_start = /*
+block_comment = *

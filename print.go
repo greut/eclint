@@ -37,7 +37,7 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 					fmt.Fprintln(stdout, l)
 				}
 			} else {
-				log.V(4).Info("lint error", "filename", filename, "error", err)
+				log.V(2).Info("lint error", "filename", filename, "error", err.Error())
 				fmt.Fprintln(stdout, err)
 			}
 
