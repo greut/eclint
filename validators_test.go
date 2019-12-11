@@ -256,6 +256,7 @@ func TestIndentStyle(t *testing.T) {
 			Name:        "unset",
 			IndentSize:  5,
 			IndentStyle: "unset",
+			Line:        []byte("###"),
 		},
 	}
 	for _, tc := range tests {
@@ -299,7 +300,7 @@ func TestIndentStyleFailure(t *testing.T) {
 			Line:        []byte("  ."),
 		}, {
 			Name:        "invalid size",
-			IndentSize:  -1,
+			IndentSize:  0,
 			IndentStyle: "space",
 			Line:        []byte("."),
 		}, {

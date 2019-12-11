@@ -143,6 +143,10 @@ func indentStyle(style string, size int, data []byte) error {
 		return fmt.Errorf("%q is an invalid value of indent_style, want tab or space", style)
 	}
 
+	if size <= 0 {
+		return fmt.Errorf("%d is an invalid value of indent_size, want a number or unset", size)
+	}
+
 	for i := 0; i < len(data); i++ {
 		if data[i] == c {
 			continue

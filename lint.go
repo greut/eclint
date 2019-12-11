@@ -82,7 +82,7 @@ func validate( //nolint:funlen,gocyclo
 		var err error
 
 		// The last line may not have the expected ending.
-		if lastLine != nil && def.EndOfLine != "" {
+		if lastLine != nil && def.EndOfLine != "" && def.EndOfLine != UnsetValue {
 			err = endOfLine(def.EndOfLine, lastLine)
 			// XXX not so nice hack
 			if ve, ok := err.(ValidationError); ok {
@@ -99,7 +99,7 @@ func validate( //nolint:funlen,gocyclo
 		lastLine = data
 		lastIndex = index
 
-		if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
+		if def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.IndentSize != UnsetValue {
 			if insideBlockComment && blockCommentEnd != nil {
 				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
 			}
