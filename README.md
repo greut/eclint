@@ -32,6 +32,7 @@ $ eclint -exclude "testdata/**/*"
 - [domain-specific properties][dsl]
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`
+- miminal magic bytes detection (currently for PDF)
 
 ### More
 
@@ -59,13 +60,14 @@ $ eclint -exclude "testdata/**/*"
 The contenders are the following.
 
 - [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker), also in Go.
+- [eclint](https://github.com/jedmao/eclint), in Node.
 
 The methodology is to run the linter against some big repositories `time $(eclint >/dev/null)`.
 
 | Repository | `editorconfig-checker` | `eclint` |
 |------------|------------------------|----------|
-| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 8s |
-| [SaltStack](https://github.com/saltstack/salt) | 7s | .5s |
+| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 10s |
+| [SaltStack](https://github.com/saltstack/salt) | 7s | 1s |
 
 ## Libraries and tools
 

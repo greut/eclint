@@ -261,7 +261,7 @@ func TestLintCharset(t *testing.T) {
 func TestLintImages(t *testing.T) {
 	l := tlogr.TestLogger{}
 
-	for _, f := range []string{"edcon_tool.png"} {
+	for _, f := range []string{"edcon_tool.png", "edcon_tool.pdf", "hello.txt.gz"} {
 		for _, err := range Lint(fmt.Sprintf("./testdata/images/%s", f), l) {
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
