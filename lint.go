@@ -121,7 +121,7 @@ func validate( //nolint:funlen,gocyclo
 			err = trimTrailingWhitespace(data)
 		}
 
-		if err == nil && maxLength > 0 && tabWidth > 0 {
+		if err == nil && maxLength > 0 {
 			// Remove any BOM from the first line.
 			d := data
 			if index == 0 && charset != "" {
@@ -214,29 +214,67 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 	return nil
 }
 
-// probeBinary tells if the reader is likely to be binary
-//
-// XXX checking for \0 is a weak strategy.
-func probeBinary(r io.ByteReader) (bool, error) {
-	for {
-		b, err := r.ReadByte()
-		if err != nil {
-			if err == io.EOF {
-				break
-			}
-			return false, fmt.Errorf("cannot probe byte. %w", err)
-		}
-
-		// XXX This will fail for any utf-16, utf-32
-		// but they are detected sooner via the BOM.
-		if b == '\000' {
-			return true, nil
-		}
+// probeMagic search for some "text"-base binary files such as PDF.
+func probeMagic(r *bufio.Reader, log logr.Logger) (bool, error) {
+	bs, err := r.Peek(512)
+	if len(bs) == 0 || (err != nil && err != io.EOF) {
+		return false, err
 	}
+
+	if bytes.HasPrefix(bs, []byte("%PDF-")) {
+		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
+		return true, nil
+	}
+
 	return false, nil
 }
 
-func probeCharset(r *bufio.Reader, charset string) (string, error) {
+// probeBinary tells if the reader is likely to be binary
+//
+// checking for \0 is a weak strategy.
+func probeBinary(r *bufio.Reader, log logr.Logger) (bool, error) {
+	bs, err := r.Peek(512)
+	if len(bs) == 0 || (err != nil && err != io.EOF) {
+		return false, err
+	}
+
+	cont := 0
+
+	for _, b := range bs {
+		switch {
+		case b>>6 == 0x02:
+			// found continuation, but no cont available, break
+			if cont <= 0 {
+				return true, nil
+			}
+			cont--
+		case b>>5 == 0x06:
+			// found leading of two bytes
+			if cont > 0 {
+				return true, nil
+			}
+			cont = 1
+		case b>>4 == 0x0e:
+			// found leading of three bytes
+			if cont > 0 {
+				return true, nil
+			}
+			cont = 2
+		case b>>3 == 0x1e:
+			// found leading of four bytes
+			if cont > 0 {
+				return true, nil
+			}
+			cont = 3
+		case b == '\000':
+			return true, nil
+		}
+	}
+
+	return false, nil
+}
+
+func probeCharset(r *bufio.Reader, charset string, log logr.Logger) (string, error) {
 	buf, err := r.Peek(512)
 	if err != nil && err != io.EOF {
 		return "", err
@@ -257,6 +295,7 @@ func probeCharset(r *bufio.Reader, charset string) (string, error) {
 				Message: fmt.Sprintf("no %s prefix were found (got %q)", charset, cs),
 			}
 		}
+		log.V(3).Info("detect using BOM", "charset", charset)
 	}
 
 	if cs == "" {
@@ -270,6 +309,7 @@ func probeCharset(r *bufio.Reader, charset string) (string, error) {
 				Message: fmt.Sprintf("detected charset %q does not match expected %q", cs, charset),
 			}
 		}
+		log.V(3).Info("detect using chardet", "charset", charset)
 	}
 
 	return cs, nil
@@ -297,7 +337,7 @@ func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 }
 
 // Lint does the hard work of validating the given file.
-func Lint(filename string, log logr.Logger) []error {
+func Lint(filename string, log logr.Logger) []error { //nolint:funlen
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
@@ -328,12 +368,16 @@ func Lint(filename string, log logr.Logger) []error {
 		return nil
 	}
 
-	charset, err := probeCharset(r, def.Charset)
+	charset, err := probeCharset(r, def.Charset, log)
 	if err != nil {
 		return []error{err}
 	}
 	if charset == "" {
-		ok, er := probeBinary(r)
+		ok, er := probeMagic(r, log)
+		if !ok && er == nil {
+			ok, er = probeBinary(r, log)
+		}
+
 		if er != nil {
 			return []error{fmt.Errorf("cannot probe binary. %w", er)}
 		}
