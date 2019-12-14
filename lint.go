@@ -214,130 +214,8 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 	return nil
 }
 
-// probeMagic search for some "text"-base binary files such as PDF.
-func probeMagic(r *bufio.Reader, log logr.Logger) (bool, error) {
-	bs, err := r.Peek(512)
-	if len(bs) == 0 || (err != nil && err != io.EOF) {
-		return false, err
-	}
-
-	if bytes.HasPrefix(bs, []byte("%PDF-")) {
-		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
-		return true, nil
-	}
-
-	return false, nil
-}
-
-// probeBinary tells if the reader is likely to be binary
-//
-// checking for \0 is a weak strategy.
-func probeBinary(r *bufio.Reader, log logr.Logger) (bool, error) {
-	bs, err := r.Peek(512)
-	if len(bs) == 0 || (err != nil && err != io.EOF) {
-		return false, err
-	}
-
-	cont := 0
-
-	for _, b := range bs {
-		switch {
-		case b>>6 == 0x02:
-			// found continuation, but no cont available, break
-			if cont <= 0 {
-				return true, nil
-			}
-			cont--
-		case b>>5 == 0x06:
-			// found leading of two bytes
-			if cont > 0 {
-				return true, nil
-			}
-			cont = 1
-		case b>>4 == 0x0e:
-			// found leading of three bytes
-			if cont > 0 {
-				return true, nil
-			}
-			cont = 2
-		case b>>3 == 0x1e:
-			// found leading of four bytes
-			if cont > 0 {
-				return true, nil
-			}
-			cont = 3
-		case b == '\000':
-			return true, nil
-		}
-	}
-
-	return false, nil
-}
-
-func probeCharset(r *bufio.Reader, charset string, log logr.Logger) (string, error) {
-	buf, err := r.Peek(512)
-	if err != nil && err != io.EOF {
-		return "", err
-	}
-
-	// empty files are valid text files
-	if len(buf) == 0 {
-		return "", nil
-	}
-
-	var cs string
-	// The first line may contain the BOM for detecting some encodings
-	if charset != Utf8 && charset != "latin1" {
-		cs = detectCharsetUsingBOM(buf)
-
-		if charset != "" && cs != charset {
-			return "", ValidationError{
-				Message: fmt.Sprintf("no %s prefix were found (got %q)", charset, cs),
-			}
-		}
-		log.V(3).Info("detect using BOM", "charset", charset)
-	}
-
-	if cs == "" {
-		cs, err = detectCharset(charset, buf)
-		if err != nil {
-			return "", err
-		}
-
-		if charset != "" && charset != cs {
-			return "", ValidationError{
-				Message: fmt.Sprintf("detected charset %q does not match expected %q", cs, charset),
-			}
-		}
-		log.V(3).Info("detect using chardet", "charset", charset)
-	}
-
-	return cs, nil
-}
-
-// probeReadable tries to read the file. When empty or a directory
-// it's considered non-readable with no errors. Otherwise the error
-// should be caught.
-func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
-	// Sanity check that the file can be read.
-	_, err := r.Peek(1)
-	if err != nil && err != io.EOF {
-		fi, err := fp.Stat()
-		if err != nil {
-			return false, err
-		}
-
-		if fi.IsDir() {
-			return false, nil
-		}
-
-		return false, err
-	}
-	return err != io.EOF, nil
-}
-
 // Lint does the hard work of validating the given file.
-func Lint(filename string, log logr.Logger) []error { //nolint:funlen
+func Lint(filename string, log logr.Logger) []error {
 	// XXX editorconfig should be able to treat a flux of
 	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
@@ -368,26 +246,16 @@ func Lint(filename string, log logr.Logger) []error { //nolint:funlen
 		return nil
 	}
 
-	charset, err := probeCharset(r, def.Charset, log)
+	charset, isBinary, err := probeCharsetOrBinary(r, def.Charset, log)
 	if err != nil {
 		return []error{err}
 	}
-	if charset == "" {
-		ok, er := probeMagic(r, log)
-		if !ok && er == nil {
-			ok, er = probeBinary(r, log)
-		}
-
-		if er != nil {
-			return []error{fmt.Errorf("cannot probe binary. %w", er)}
-		}
-		if ok {
-			log.V(2).Info("binary file detected and skipped", "filename", filename)
-			return nil
-		}
+	if isBinary {
+		log.V(2).Info("binary file detected and skipped", "filename", filename)
+		return nil
 	}
-
 	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
+
 	errs := validate(r, charset, log, def)
 
 	// Enrich the errors with the filename

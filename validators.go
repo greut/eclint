@@ -3,9 +3,6 @@ package eclint
 import (
 	"bytes"
 	"fmt"
-	"strings"
-
-	"github.com/gogs/chardet"
 )
 
 const (
@@ -70,59 +67,6 @@ func endOfLine(eol string, data []byte) error {
 	}
 
 	return nil
-}
-
-// detectCharsetUsingBOM checks the charset via the first bytes of the first line
-func detectCharsetUsingBOM(data []byte) string {
-	switch {
-	case bytes.HasPrefix(data, utf32leBom):
-		return "utf-32le"
-	case bytes.HasPrefix(data, utf32beBom):
-		return "utf-32be"
-	case bytes.HasPrefix(data, utf16leBom):
-		return "utf-16le"
-	case bytes.HasPrefix(data, utf16beBom):
-		return "utf-16be"
-	case bytes.HasPrefix(data, utf8Bom):
-		return "utf-8 bom"
-	}
-	return ""
-}
-
-// detectCharset detects the file encoding
-func detectCharset(charset string, data []byte) (string, error) {
-	if charset == "" {
-		return charset, nil
-	}
-
-	d := chardet.NewTextDetector()
-	results, err := d.DetectAll(data)
-	if err != nil {
-		return "", fmt.Errorf("charset detection failure %s", err)
-	}
-
-	for i, result := range results {
-		if strings.HasPrefix(result.Charset, "ISO-8859-") {
-			result.Charset = "ASCII"
-		}
-		switch result.Charset {
-		case "UTF-8":
-			return Utf8, nil
-		case "ASCII":
-			if charset == Utf8 {
-				return Utf8, nil
-			}
-			return "latin1", nil
-		default:
-			if i == 0 {
-				charset = result.Charset
-			} else {
-				charset = fmt.Sprintf("%s,%s", charset, result.Charset)
-			}
-		}
-	}
-
-	return "", fmt.Errorf("got the following charset(s) %q which are not supported", charset)
 }
 
 // indentStyle checks that the line beginnings are either space or tabs
