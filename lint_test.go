@@ -83,7 +83,7 @@ func TestCharset(t *testing.T) {
 	}
 }
 
-func TestInsertFinalNewline(t *testing.T) {
+func TestInsertFinalNewline(t *testing.T) { // nolint:funlen
 	tests := []struct {
 		Name               string
 		InsertFinalNewline bool
@@ -100,6 +100,10 @@ func TestInsertFinalNewline(t *testing.T) {
 			InsertFinalNewline: false,
 			File: []byte(`A file
 without a final newline.`),
+		}, {
+			Name:               "empty file",
+			InsertFinalNewline: true,
+			File:               []byte(""),
 		},
 	}
 
