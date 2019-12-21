@@ -67,8 +67,8 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	b := bytes.NewBuffer(make([]byte, len(line)))
 
-	if position > len(line) {
-		position = len(line)
+	if position > len(line)-1 {
+		position = len(line) - 1
 	}
 
 	for i := 0; i < position; i++ {
@@ -76,12 +76,15 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 			if err := b.WriteByte(line[i]); err != nil {
 				return "", err
 			}
-
-			// skip 0x10xxxxxx that are UTF-8 continuation markers
-			if (line[i] >> 6) == 0b10 {
-				position++
-			}
 		}
+	}
+
+	// Rewind the 0x10xxxxxx that are UTF-8 continuation markers
+	for i := position; i > 0; i-- {
+		if (line[i] >> 6) != 0b10 {
+			break
+		}
+		position--
 	}
 
 	// XXX this will break every non latin1 line.

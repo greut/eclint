@@ -10,6 +10,6 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20191116043053-66b7ad493a23
 	github.com/mattn/go-colorable v0.1.4
 	github.com/stretchr/testify v1.3.1-0.20190311161405-34c6fa2dc709 // indirect
-	golang.org/x/crypto v0.0.0-20191206172530-e9b2fee46413
+	golang.org/x/crypto v0.0.0-20191219195013-becbf705a915
 	k8s.io/klog/v2 v2.0.0-20191023130815-8422fac62d1e
 )
