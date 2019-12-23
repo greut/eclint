@@ -3,6 +3,7 @@ image: golang:1.13-alpine
 variables:
   GORELEASER_IMAGE: goreleaser/goreleaser:latest
   NANCY_VERSION: v0.0.39
+  GIT_DEPTH: "0"
 
 stages:
   - test
@@ -18,6 +19,12 @@ go test:
   script:
     - go test -v
       -cover -covermode atomic
+      -coverprofile coverage.out
+      -json > test-report.json
+  artifacts:
+    paths:
+      - test-report.json
+      - coverage.out
 
 eclint:
   stage: lint
@@ -29,7 +36,10 @@ golangci-lint:
   stage: lint
   image: golangci/golangci-lint
   script:
-    - golangci-lint run -v
+    - golangci-lint run --out-format checkstyle > report.xml
+  artifacts:
+    paths:
+      - report.xml
 
 nancy:
   stage: check
@@ -38,6 +48,17 @@ nancy:
       "https://github.com/sonatype-nexus-community/nancy/releases/download/${NANCY_VERSION}/nancy-linux.amd64-${NANCY_VERSION}"
     - chmod +x nancy
     - ./nancy go.sum
+
+sonarcloud check:
+  stage: check
+  image:
+    name: greut/sonar-scanner-cli:latest
+    entrypoint: [""]
+  needs:
+    - go test
+    - golangci-lint
+  script:
+    - sonar-scanner
 
 go-mod-outdated:
   stage: check
