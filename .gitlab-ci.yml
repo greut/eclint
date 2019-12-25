@@ -21,10 +21,10 @@ go test:
       -cover -covermode atomic
       -coverprofile coverage.out
       -json > test-report.json
+    - go tool cover -func coverage.out
   artifacts:
     paths:
       - test-report.json
-      - coverage.out
 
 eclint:
   stage: lint
