@@ -72,7 +72,9 @@ func endOfLine(eol string, data []byte) error {
 // indentStyle checks that the line beginnings are either space or tabs
 func indentStyle(style string, size int, data []byte) error {
 	var c byte
+
 	var x byte
+
 	switch style {
 	case SpaceValue:
 		c = space
@@ -95,15 +97,18 @@ func indentStyle(style string, size int, data []byte) error {
 		if data[i] == c {
 			continue
 		}
+
 		if data[i] == x {
 			return ValidationError{
 				Message:  fmt.Sprintf("indentation style mismatch expected %q (%s) got %q", c, style, x),
 				Position: i,
 			}
 		}
+
 		if data[i] == cr || data[i] == lf || (size > 0 && i%size == 0) {
 			break
 		}
+
 		return ValidationError{
 			Message:  fmt.Sprintf("indentation size doesn't match expected %d, got %d", size, i),
 			Position: i,
@@ -119,14 +124,17 @@ func trimTrailingWhitespace(data []byte) error {
 		if data[i] == cr || data[i] == lf {
 			continue
 		}
+
 		if data[i] == space || data[i] == tab {
 			return ValidationError{
 				Message:  "line has some trailing whitespaces",
 				Position: i,
 			}
 		}
+
 		break
 	}
+
 	return nil
 }
 
@@ -136,8 +144,10 @@ func isBlockCommentStart(start []byte, data []byte) bool {
 		if data[i] == space || data[i] == tab {
 			continue
 		}
+
 		return bytes.HasPrefix(data[i:], start)
 	}
+
 	return false
 }
 
@@ -147,14 +157,17 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 		if data[i] == space || data[i] == tab {
 			continue
 		}
+
 		if !bytes.HasPrefix(data[i:], prefix) {
 			return ValidationError{
 				Message:  fmt.Sprintf("block_comment prefix %q was expected inside a block comment", string(prefix)),
 				Position: i,
 			}
 		}
+
 		break
 	}
+
 	return nil
 }
 
@@ -164,8 +177,10 @@ func isBlockCommentEnd(end []byte, data []byte) bool {
 		if data[i] == cr || data[i] == lf {
 			continue
 		}
+
 		return bytes.HasSuffix(data[:i], end)
 	}
+
 	return false
 }
 
@@ -177,10 +192,12 @@ func isBlockCommentEnd(end []byte, data []byte) bool {
 func MaxLineLength(maxLength int, tabWidth int, data []byte) error {
 	length := 0
 	breakingPosition := 0
+
 	for i := 0; i < len(data); i++ {
 		if data[i] == cr || data[i] == lf {
 			break
 		}
+
 		switch {
 		case data[i] == tab:
 			length += tabWidth
@@ -189,6 +206,7 @@ func MaxLineLength(maxLength int, tabWidth int, data []byte) error {
 		default:
 			length++
 		}
+
 		if length > maxLength && breakingPosition == 0 {
 			breakingPosition = i
 		}

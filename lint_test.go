@@ -15,6 +15,7 @@ func utf16le(s string) []byte {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})        // nolint: errcheck
 	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s))) // nolint: errcheck
+
 	return buf.Bytes()
 }
 
@@ -22,6 +23,7 @@ func utf16be(s string) []byte {
 	buf := new(bytes.Buffer)
 	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})        // nolint: errcheck
 	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s))) // nolint: errcheck
+
 	return buf.Bytes()
 }
 
@@ -354,12 +356,15 @@ func TestOverridingUsingPrefix(t *testing.T) {
 	if def.Charset != "unset" {
 		t.Errorf("charset not changed, got %q", def.Charset)
 	}
+
 	if def.IndentStyle != "space" {
 		t.Errorf("indent_style not changed, got %q", def.IndentStyle)
 	}
+
 	if def.IndentSize != "4" {
 		t.Errorf("indent_size not changed, got %q", def.IndentSize)
 	}
+
 	if def.TabWidth != 4 {
 		t.Errorf("tab_width not changed, got %d", def.TabWidth)
 	}

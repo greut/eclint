@@ -67,11 +67,13 @@ func main() { //nolint:funlen
 	}
 
 	args := flag.Args()
+
 	files, err := eclint.ListFiles(log, args...)
 	if err != nil {
 		log.Error(err, "error while handling the arguments")
 		flag.Usage()
 		os.Exit(1)
+
 		return
 	}
 
@@ -83,6 +85,7 @@ func main() { //nolint:funlen
 	}
 
 	c := 0
+
 	for _, filename := range files {
 		// Skip excluded files
 		if opt.Exclude != "" {
@@ -90,8 +93,10 @@ func main() { //nolint:funlen
 			if err != nil {
 				log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
 				c++
+
 				break
 			}
+
 			if ok {
 				continue
 			}
@@ -99,6 +104,7 @@ func main() { //nolint:funlen
 
 		errs := eclint.Lint(filename, opt.Log)
 		c += len(errs)
+
 		err := eclint.PrintErrors(opt, filename, errs)
 		if err != nil {
 			log.Error(err, "print errors failure", "filename", filename)

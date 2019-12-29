@@ -16,9 +16,11 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 	for i < len(data) {
 		if data[i] == cr {
 			i++
+
 			if i < len(data) && data[i] == lf {
 				i++
 			}
+
 			return i, data[0:i], nil
 		} else if data[i] == lf {
 			i++
@@ -49,10 +51,13 @@ func ReadLines(r io.Reader, fn LineFunc) []error {
 	sc.Split(SplitLines)
 
 	i := 0
+
 	for sc.Scan() {
 		l := sc.Bytes()
 		line := make([]byte, len(l))
+
 		copy(line, l)
+
 		if err := fn(i, line); err != nil {
 			errs = append(errs, err)
 		}
