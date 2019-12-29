@@ -36,19 +36,25 @@ func validate( //nolint:funlen,gocyclo
 	indentSize, _ := strconv.Atoi(def.IndentSize)
 
 	var lastLine []byte
+
 	var lastIndex int
 
 	errs := make([]error, 0)
 
 	var insideBlockComment bool
+
 	var blockCommentStart []byte
+
 	var blockComment []byte
+
 	var blockCommentEnd []byte
+
 	if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
 		bs, ok := def.Raw["block_comment_start"]
 		if ok && bs != "" && bs != UnsetValue {
 			blockCommentStart = []byte(bs)
 			bc, ok := def.Raw["block_comment"]
+
 			if ok && bc != "" && bs != UnsetValue {
 				blockComment = []byte(bc)
 			}
@@ -57,18 +63,22 @@ func validate( //nolint:funlen,gocyclo
 			if !ok || be == "" || be == UnsetValue {
 				errs = append(errs, fmt.Errorf("block_comment_end was expected, none were found"))
 			}
+
 			blockCommentEnd = []byte(be)
 		}
 	}
 
 	maxLength := 0
 	tabWidth := def.TabWidth
+
 	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != UnsetValue {
 		ml, err := strconv.Atoi(mll)
 		if err != nil || ml < 0 {
 			errs = append(errs, fmt.Errorf("max_line_length expected a non-negative number, got %q", mll))
 		}
+
 		maxLength = ml
+
 		if tabWidth <= 0 {
 			tabWidth = DefaultTabWidth
 		}
@@ -147,7 +157,9 @@ func validate( //nolint:funlen,gocyclo
 
 	if lastLine != nil && def.InsertFinalNewline != nil {
 		var err error
+
 		var lastChar byte
+
 		if len(lastLine) > 0 {
 			lastChar = lastLine[len(lastLine)-1]
 		}
@@ -189,6 +201,7 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 		if strings.HasPrefix(k, prefix) {
 			nk := k[len(prefix):]
 			def.Raw[nk] = v
+
 			switch nk {
 			case "indent_style":
 				def.IndentStyle = v
@@ -203,6 +216,7 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 				if err != nil {
 					return fmt.Errorf("tab_width cannot be set. %w", err)
 				}
+
 				def.TabWidth = i
 			case "trim_trailing_whitespace":
 				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
@@ -211,6 +225,7 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 			}
 		}
 	}
+
 	return nil
 }
 
@@ -222,12 +237,14 @@ func Lint(filename string, log logr.Logger) []error {
 	if err != nil {
 		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
 	}
+
 	log.V(1).Info("lint", "filename", filename)
 
 	fp, err := os.Open(filename)
 	if err != nil {
 		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
 	}
+
 	defer fp.Close()
 
 	err = overrideUsingPrefix(def, "eclint_")
@@ -241,6 +258,7 @@ func Lint(filename string, log logr.Logger) []error {
 	if err != nil {
 		return []error{fmt.Errorf("cannot read %s. %w", filename, err)}
 	}
+
 	if !ok {
 		log.V(2).Info("skipped unreadable or empty file", "filename", filename)
 		return nil
@@ -250,10 +268,12 @@ func Lint(filename string, log logr.Logger) []error {
 	if err != nil {
 		return []error{err}
 	}
+
 	if isBinary {
 		log.V(2).Info("binary file detected and skipped", "filename", filename)
 		return nil
 	}
+
 	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
 
 	errs := validate(r, charset, log, def)

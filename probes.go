@@ -24,16 +24,20 @@ func probeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (str
 	if err != nil {
 		return "", false, err
 	}
+
 	if cs == "" {
 		ok, er := probeMagic(bs, log)
 		if !ok && er == nil {
 			ok, er = probeBinary(bs, log)
 		}
+
 		if er != nil {
 			return "", false, fmt.Errorf("cannot probe binary. %w", er)
 		}
+
 		return "", ok, nil
 	}
+
 	return cs, false, nil
 }
 
@@ -43,6 +47,7 @@ func probeMagic(bs []byte, log logr.Logger) (bool, error) {
 		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
 		return true, nil
 	}
+
 	return false, nil
 }
 
@@ -51,6 +56,7 @@ func probeMagic(bs []byte, log logr.Logger) (bool, error) {
 // checking for \0 is a weak strategy.
 func probeBinary(bs []byte, log logr.Logger) (bool, error) {
 	cont := 0
+
 	for _, b := range bs {
 		switch {
 		case b>>6 == 0x02:
@@ -58,24 +64,28 @@ func probeBinary(bs []byte, log logr.Logger) (bool, error) {
 			if cont <= 0 {
 				return true, nil
 			}
+
 			cont--
 		case b>>5 == 0x06:
 			// found leading of two bytes
 			if cont > 0 {
 				return true, nil
 			}
+
 			cont = 1
 		case b>>4 == 0x0e:
 			// found leading of three bytes
 			if cont > 0 {
 				return true, nil
 			}
+
 			cont = 2
 		case b>>3 == 0x1e:
 			// found leading of four bytes
 			if cont > 0 {
 				return true, nil
 			}
+
 			cont = 3
 		case b == '\000':
 			return true, nil
@@ -101,6 +111,7 @@ func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
 				Message: fmt.Sprintf("no %s prefix were found (got %q)", charset, cs),
 			}
 		}
+
 		log.V(3).Info("detect using BOM", "charset", charset)
 	}
 
@@ -115,6 +126,7 @@ func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
 				Message: fmt.Sprintf("detected charset %q does not match expected %q", cs, charset),
 			}
 		}
+
 		log.V(3).Info("detect using chardet", "charset", charset)
 	}
 
@@ -139,6 +151,7 @@ func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 
 		return false, err
 	}
+
 	return err != io.EOF, nil
 }
 
@@ -156,6 +169,7 @@ func detectCharsetUsingBOM(data []byte) string {
 	case bytes.HasPrefix(data, utf8Bom):
 		return "utf-8 bom"
 	}
+
 	return ""
 }
 
@@ -166,6 +180,7 @@ func detectCharset(charset string, data []byte) (string, error) {
 	}
 
 	d := chardet.NewTextDetector()
+
 	results, err := d.DetectAll(data)
 	if err != nil {
 		return "", fmt.Errorf("charset detection failure %s", err)
@@ -175,6 +190,7 @@ func detectCharset(charset string, data []byte) (string, error) {
 		if strings.HasPrefix(result.Charset, "ISO-8859-") {
 			result.Charset = "ASCII"
 		}
+
 		switch result.Charset {
 		case "UTF-8":
 			return Utf8, nil
@@ -182,6 +198,7 @@ func detectCharset(charset string, data []byte) (string, error) {
 			if charset == Utf8 {
 				return Utf8, nil
 			}
+
 			return "latin1", nil
 		default:
 			if i == 0 {

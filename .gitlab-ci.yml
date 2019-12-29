@@ -36,7 +36,9 @@ golangci-lint:
   stage: lint
   image: golangci/golangci-lint
   script:
-    - golangci-lint run --out-format checkstyle > report.xml
+    - golangci-lint run -v
+      --issues-exit-code 0
+      --out-format checkstyle > report.xml
   artifacts:
     paths:
       - report.xml

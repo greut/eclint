@@ -18,10 +18,12 @@ const (
 func TestListFiles(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
+
 	fs, err := eclint.ListFiles(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(fs) != 5 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
@@ -35,6 +37,7 @@ func TestListFilesNoArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer func() {
 		if err := os.Chdir(cwd); err != nil {
 			t.Fatal(err)
@@ -50,13 +53,13 @@ func TestListFilesNoArgs(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(fs) != 3 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
 }
 
 func TestListFilesNoGit(t *testing.T) {
-	// FIXME... should be the null logger, right?
 	l := tlogr.NullLogger{}
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
@@ -69,11 +72,13 @@ func TestListFilesNoGit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	defer func() {
 		if err := os.Chdir(cwd); err != nil {
 			t.Fatal(err)
 		}
 	}()
+
 	err = os.Chdir(d)
 	if err != nil {
 		t.Fatal(err)
@@ -83,6 +88,7 @@ func TestListFilesNoGit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(fs) != 1 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
@@ -91,10 +97,12 @@ func TestListFilesNoGit(t *testing.T) {
 func TestWalk(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
+
 	fs, err := eclint.Walk(l, d)
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(fs) != 5 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}
@@ -108,6 +116,7 @@ func TestGitLsFiles(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+
 	if len(fs) != 3 {
 		t.Errorf("%s should have two files, got %d", d, len(fs))
 	}

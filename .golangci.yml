@@ -17,6 +17,7 @@ linters:
     - goconst
     - gocritic
     - gocyclo
+    - godox
     - goimports
     - golint
     - gosec
@@ -34,4 +35,5 @@ linters:
     - unused
     - varcheck
     - whitespace
+    - wsl
   disable-all: true

@@ -25,6 +25,7 @@ func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 		}
 
 		log.Error(err, "git ls-files failure")
+
 		args = append(args, ".")
 	}
 
@@ -34,6 +35,7 @@ func ListFiles(log logr.Logger, args ...string) ([]string, error) {
 // Walk iterates on each path item recursively.
 func Walk(log logr.Logger, paths ...string) ([]string, error) {
 	files := make([]string, 0)
+
 	for _, path := range paths {
 		err := filepath.Walk(path, func(p string, _ os.FileInfo, e error) error {
 			if e != nil {
@@ -41,12 +43,14 @@ func Walk(log logr.Logger, paths ...string) ([]string, error) {
 			}
 			log.V(2).Info("index", "filename", p)
 			files = append(files, p)
+
 			return nil
 		})
 		if err != nil {
 			return files, err
 		}
 	}
+
 	return files, nil
 }
 
@@ -70,5 +74,6 @@ func GitLsFiles(log logr.Logger, path string) ([]string, error) {
 		log.V(2).Info("index", "filename", p)
 		files[i] = p
 	}
+
 	return files, nil
 }

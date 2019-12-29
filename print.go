@@ -25,15 +25,18 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 
 			if ve, ok := err.(ValidationError); ok {
 				log.V(4).Info("lint error", "error", ve)
+
 				if !opt.Summary {
 					vi := au.Green(strconv.Itoa(ve.Index + 1))
 					vp := au.Green(strconv.Itoa(ve.Position + 1))
 					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.Message)
+
 					l, err := errorAt(au, ve.Line, ve.Position)
 					if err != nil {
 						log.Error(err, "line formating failure", "error", ve)
 						return err
 					}
+
 					fmt.Fprintln(stdout, l)
 				}
 			} else {
@@ -48,6 +51,7 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 					stdout,
 					fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errors)-counter))),
 				)
+
 				break
 			}
 		}
@@ -60,6 +64,7 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 			fmt.Fprintf(stdout, "%s: %d errors\n", au.Magenta(filename), counter)
 		}
 	}
+
 	return nil
 }
 
@@ -92,6 +97,7 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	if position < len(line)-1 {
 		s = string(line[position : position+1])
 	}
+
 	if _, err := b.WriteString(au.White(s).BgRed().String()); err != nil {
 		return "", err
 	}
