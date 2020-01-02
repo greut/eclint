@@ -24,6 +24,7 @@ go test:
     - go tool cover -func coverage.out
   artifacts:
     paths:
+      - coverage.out
       - test-report.json
 
 eclint:
