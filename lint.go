@@ -264,7 +264,7 @@ func Lint(filename string, log logr.Logger) []error {
 		return nil
 	}
 
-	charset, isBinary, err := probeCharsetOrBinary(r, def.Charset, log)
+	charset, isBinary, err := ProbeCharsetOrBinary(r, def.Charset, log)
 	if err != nil {
 		return []error{err}
 	}

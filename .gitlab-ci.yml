@@ -62,6 +62,8 @@ sonarcloud check:
     - golangci-lint
   script:
     - sonar-scanner
+      -Dsonar.projectVersion=$(git describe --abbrev=0 --tags)
+      -Dsonar.qualitygate.wait=true
 
 go-mod-outdated:
   stage: check
