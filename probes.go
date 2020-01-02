@@ -12,9 +12,9 @@ import (
 	"github.com/gogs/chardet"
 )
 
-// probeCharsetOrBinary does all the probes to detect the encoding
+// ProbeCharsetOrBinary does all the probes to detect the encoding
 // or whether it is a binary file.
-func probeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (string, bool, error) {
+func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (string, bool, error) {
 	bs, err := r.Peek(512)
 	if len(bs) == 0 || (err != nil && err != io.EOF) {
 		return "", false, err
@@ -116,10 +116,12 @@ func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
 	}
 
 	if cs == "" {
-		cs, err := detectCharset(charset, bs)
+		c, err := detectCharset(charset, bs)
 		if err != nil {
 			return "", err
 		}
+
+		cs = c
 
 		if charset != "" && charset != cs {
 			return "", ValidationError{
