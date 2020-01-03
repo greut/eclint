@@ -55,7 +55,7 @@ nancy:
 sonarcloud check:
   stage: check
   image:
-    name: greut/sonar-scanner-cli:latest
+    name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]
   needs:
     - go test

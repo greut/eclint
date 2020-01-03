@@ -16,7 +16,7 @@ import (
 // or whether it is a binary file.
 func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (string, bool, error) {
 	bs, err := r.Peek(512)
-	if len(bs) == 0 || (err != nil && err != io.EOF) {
+	if err != nil && err != io.EOF {
 		return "", false, err
 	}
 
@@ -57,48 +57,51 @@ func probeMagic(bs []byte, log logr.Logger) (bool, error) {
 func probeBinary(bs []byte, log logr.Logger) (bool, error) {
 	cont := 0
 
+outer:
 	for _, b := range bs {
 		switch {
 		case b>>6 == 0x02:
+			cont--
+
 			// found continuation, but no cont available, break
-			if cont <= 0 {
-				return true, nil
+			if cont < 0 {
+				break outer
 			}
 
-			cont--
 		case b>>5 == 0x06:
 			// found leading of two bytes
 			if cont > 0 {
-				return true, nil
+				break outer
 			}
 
 			cont = 1
 		case b>>4 == 0x0e:
 			// found leading of three bytes
 			if cont > 0 {
-				return true, nil
+				break outer
 			}
 
 			cont = 2
 		case b>>3 == 0x1e:
 			// found leading of four bytes
 			if cont > 0 {
-				return true, nil
+				break outer
 			}
 
 			cont = 3
 		case b == '\000':
-			return true, nil
+			cont = -1
+			break outer
 		}
 	}
 
-	return false, nil
+	return cont != 0, nil
 }
 
 func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
 	// empty files are valid text files
 	if len(bs) == 0 {
-		return "", nil
+		return charset, nil
 	}
 
 	var cs string

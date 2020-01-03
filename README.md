@@ -64,10 +64,10 @@ The contenders are the following.
 
 The methodology is to run the linter against some big repositories `time $(eclint >/dev/null)`.
 
-| Repository | `editorconfig-checker` | `eclint` |
-|------------|------------------------|----------|
-| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 10s |
-| [SaltStack](https://github.com/saltstack/salt) | 7s | 1s |
+| Repository | `editorconfig-checker` | `jedmao/eclint` | `greut/eclint` |
+|------------|------------------------|-----------------|----------|
+| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 1m5s | **8s** |
+| [SaltStack](https://github.com/saltstack/salt) | 7s | 1m9s |  **1s** |
 
 ## Libraries and tools
 

@@ -238,7 +238,7 @@ func TestIndentStyleFailure(t *testing.T) {
 			Line:        []byte("  ."),
 		}, {
 			Name:        "invalid size",
-			IndentSize:  0,
+			IndentSize:  -1,
 			IndentStyle: "space",
 			Line:        []byte("."),
 		}, {
