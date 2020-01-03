@@ -27,7 +27,7 @@ func utf16be(s string) []byte {
 	return buf.Bytes()
 }
 
-func TestProbeCharsetOfBinary(t *testing.T) {
+func TestProbeCharsetOfBinary(t *testing.T) { // nolint: funlen
 	tests := []struct {
 		Name    string
 		Charset string
@@ -36,7 +36,11 @@ func TestProbeCharsetOfBinary(t *testing.T) {
 		{
 			Name:    "utf-8",
 			Charset: "utf-8",
-			File:    []byte("Hello world."),
+			File:    []byte{'h', 'i', ' ', 0xf0, 0x9f, 0x92, 0xa9, '!'},
+		}, {
+			Name:    "empty utf-8",
+			Charset: "utf-8",
+			File:    []byte(""),
 		}, {
 			Name:    "utf-8 bom",
 			Charset: "utf-8 bom",
@@ -85,6 +89,80 @@ func TestProbeCharsetOfBinary(t *testing.T) {
 
 			if charset != tc.Charset {
 				t.Errorf("bad charset. expected %s, got %s", tc.Charset, charset)
+			}
+		})
+	}
+}
+
+func TestProbeCharsetOfBinaryFailure(t *testing.T) {
+	tests := []struct {
+		Name    string
+		Charset string
+		File    []byte
+	}{
+		{
+			Name:    "utf-8 vs latin1",
+			Charset: "latin1",
+			File:    []byte{'h', 'i', ' ', 0xf0, 0x9f, 0x92, 0xa9, '!'},
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			r := bytes.NewReader(tc.File)
+			br := bufio.NewReader(r)
+
+			charset, ok, err := eclint.ProbeCharsetOrBinary(br, tc.Charset, l)
+			if err == nil {
+				t.Errorf("an error was expected, got charset %s, %v", charset, ok)
+			}
+		})
+	}
+}
+
+func TestProbeCharsetOfBinaryForBinary(t *testing.T) {
+	tests := []struct {
+		Name    string
+		Charset string
+		File    []byte
+	}{
+		{
+			Name: "euro but reversed",
+			File: []byte{0xac, 0x82, 0xe2},
+		}, {
+			Name: "euro but trucated",
+			File: []byte{0xe2, 0x82},
+		}, {
+			Name: "poop but middle only",
+			File: []byte{0x9f, 0x92, 0xa9},
+		}, {
+			Name: "poop emoji but trucated",
+			File: []byte{0xf0, 0x9f, 0x92},
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			r := bytes.NewReader(tc.File)
+			br := bufio.NewReader(r)
+
+			charset, ok, err := eclint.ProbeCharsetOrBinary(br, "", l)
+			if err != nil {
+				t.Errorf("no errors were expected %s", err)
+			}
+
+			if !ok {
+				t.Errorf("binary should have been detected got %s", charset)
 			}
 		})
 	}
