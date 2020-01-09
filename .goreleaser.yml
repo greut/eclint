@@ -24,6 +24,9 @@ dockers:
   - greut/eclint:latest
   - greut/eclint:{{ .Tag }}
   - greut/eclint:v{{ .Major }}
+  - registry.gitlab.com/greut/eclint:latest
+  - registry.gitlab.com/greut/eclint:{{ .Tag }}
+  - registry.gitlab.com/greut/eclint:v{{ .Major }}
   goos: linux
   goarch: amd64
   binaries:
