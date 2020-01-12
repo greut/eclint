@@ -84,7 +84,6 @@ func main() { //nolint:funlen
 		if err := pprof.StartCPUProfile(f); err != nil {
 			log.Error(err, "could not start CPU profile")
 		}
-		defer pprof.StopCPUProfile()
 	}
 
 	args := flag.Args()
@@ -144,6 +143,10 @@ func main() { //nolint:funlen
 		if err := pprof.WriteHeapProfile(f); err != nil {
 			log.Error(err, "could not write memory profile")
 		}
+	}
+
+	if cpuprofile != "" {
+		pprof.StopCPUProfile()
 	}
 
 	if c > 0 {
