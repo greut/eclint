@@ -69,6 +69,10 @@ The methodology is to run the linter against some big repositories `time $(eclin
 | [Roslyn](https://github.com/dotnet/roslyn) | 37s | 1m5s | **8s** |
 | [SaltStack](https://github.com/saltstack/salt) | 7s | 1m9s |  **1s** |
 
+### Profiling
+
+Two options: `-cpuprofile <file>` and `-memprofile <file>`, will produce the appropriate _pprof_ files. At the time being a good chunk of time is spent into the `editorconfig-core-go` library as it has no sense of definition caching.
+
 ## Libraries and tools
 
 - [aurora](https://github.com/logrusorgru/aurora), colored output

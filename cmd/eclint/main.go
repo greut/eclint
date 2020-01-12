@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"runtime"
+	"runtime/pprof"
 	"syscall"
 
 	"golang.org/x/crypto/ssh/terminal"
@@ -23,6 +24,8 @@ var (
 func main() { //nolint:funlen
 	flagVersion := false
 	forceColors := false
+	cpuprofile := ""
+	memprofile := ""
 	log := klogr.New()
 	opt := eclint.Option{
 		Stdout:            os.Stdout,
@@ -54,6 +57,8 @@ func main() { //nolint:funlen
 		"display only the first n errors (0 means all)",
 	)
 	flag.StringVar(&opt.Exclude, "exclude", "", "paths to exclude")
+	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
+	flag.StringVar(&memprofile, "memprofile", "", "write mem profile to `file`")
 	flag.Parse()
 
 	if flagVersion {
@@ -64,6 +69,21 @@ func main() { //nolint:funlen
 	if forceColors {
 		opt.NoColors = false
 		opt.IsTerminal = true
+	}
+
+	if cpuprofile != "" {
+		f, err := os.Create(cpuprofile)
+		if err != nil {
+			log.Error(err, "could not create CPU profile", "cpuprofile", cpuprofile)
+			os.Exit(1)
+
+			return
+		}
+		defer f.Close()
+
+		if err := pprof.StartCPUProfile(f); err != nil {
+			log.Error(err, "could not start CPU profile")
+		}
 	}
 
 	args := flag.Args()
@@ -109,6 +129,24 @@ func main() { //nolint:funlen
 		if err != nil {
 			log.Error(err, "print errors failure", "filename", filename)
 		}
+	}
+
+	if memprofile != "" {
+		f, err := os.Create(memprofile)
+		if err != nil {
+			log.Error(err, "could not create memory profile", "memprofile", memprofile)
+		}
+		defer f.Close()
+
+		runtime.GC() // get up-to-date statistics
+
+		if err := pprof.WriteHeapProfile(f); err != nil {
+			log.Error(err, "could not write memory profile")
+		}
+	}
+
+	if cpuprofile != "" {
+		pprof.StopCPUProfile()
 	}
 
 	if c > 0 {
