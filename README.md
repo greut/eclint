@@ -62,12 +62,12 @@ The contenders are the following.
 - [editorconfig-checker](https://github.com/editorconfig-checker/editorconfig-checker), also in Go.
 - [eclint](https://github.com/jedmao/eclint), in Node.
 
-The methodology is to run the linter against some big repositories `time $(eclint >/dev/null)`.
+The methodology is to run the linter against some big repositories `time eclint -show_all_errors`.
 
 | Repository | `editorconfig-checker` | `jedmao/eclint` | `greut/eclint` |
 |------------|------------------------|-----------------|----------|
-| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 1m5s | **8s** |
-| [SaltStack](https://github.com/saltstack/salt) | 7s | 1m9s |  **1s** |
+| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 1m5s | **4s** |
+| [SaltStack](https://github.com/saltstack/salt) | 7s | 1m9s |  **<1s** |
 
 ### Profiling
 
