@@ -231,15 +231,16 @@ func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
 
 // Lint does the hard work of validating the given file.
 func Lint(filename string, log logr.Logger) []error {
-	// XXX editorconfig should be able to treat a flux of
-	// filenames with caching capabilities.
 	def, err := editorconfig.GetDefinitionForFilename(filename)
 	if err != nil {
 		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
 	}
 
-	log.V(1).Info("lint", "filename", filename)
+	return LintWithDefinition(def, filename, log)
+}
 
+// LintWithDefinition does the hard work of validating the given file.
+func LintWithDefinition(def *editorconfig.Definition, filename string, log logr.Logger) []error {
 	fp, err := os.Open(filename)
 	if err != nil {
 		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
@@ -260,7 +261,7 @@ func Lint(filename string, log logr.Logger) []error {
 	}
 
 	if !ok {
-		log.V(2).Info("skipped unreadable or empty file", "filename", filename)
+		log.V(2).Info("skipped unreadable or empty file")
 		return nil
 	}
 
@@ -270,11 +271,11 @@ func Lint(filename string, log logr.Logger) []error {
 	}
 
 	if isBinary {
-		log.V(2).Info("binary file detected and skipped", "filename", filename)
+		log.V(2).Info("binary file detected and skipped")
 		return nil
 	}
 
-	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
+	log.V(2).Info("charset probed", "charset", charset)
 
 	errs := validate(r, charset, log, def)
 

@@ -71,6 +71,11 @@ func main() { //nolint:funlen
 		opt.IsTerminal = true
 	}
 
+	if opt.Summary {
+		opt.ShowAllErrors = true
+		opt.ShowErrorQuantity = 0
+	}
+
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)
 		if err != nil {
@@ -99,9 +104,10 @@ func main() { //nolint:funlen
 
 	log.V(1).Info("files", "count", len(files), "exclude", opt.Exclude)
 
-	if opt.Summary {
-		opt.ShowAllErrors = true
-		opt.ShowErrorQuantity = 0
+	config := &editorconfig.Config{}
+
+	if len(files) > 0 {
+		config.Parser = editorconfig.NewCachedParser()
 	}
 
 	c := 0
@@ -122,11 +128,18 @@ func main() { //nolint:funlen
 			}
 		}
 
-		errs := eclint.Lint(filename, opt.Log)
+		def, err := config.Load(filename)
+		if err != nil {
+			log.Error(err, "cannot open file", "filename", filename)
+			c++
+
+			break
+		}
+
+		errs := eclint.LintWithDefinition(def, filename, opt.Log.WithValues("filename", filename))
 		c += len(errs)
 
-		err := eclint.PrintErrors(opt, filename, errs)
-		if err != nil {
+		if err := eclint.PrintErrors(opt, filename, errs); err != nil {
 			log.Error(err, "print errors failure", "filename", filename)
 		}
 	}
