@@ -27,6 +27,9 @@ dockers:
   - registry.gitlab.com/greut/eclint:latest
   - registry.gitlab.com/greut/eclint:{{ .Tag }}
   - registry.gitlab.com/greut/eclint:v{{ .Major }}
+  - docker.pkg.github.com/greut/eclint/cmd:latest
+  - docker.pkg.github.com/greut/eclint/cmd:{{ .Tag }}
+  - docker.pkg.github.com/greut/eclint/cmd:v{{ .Major }}
   goos: linux
   goarch: amd64
   binaries:
