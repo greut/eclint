@@ -34,6 +34,13 @@ dockers:
   goarch: amd64
   binaries:
   - eclint
+  build_flag_templates:
+  - "--pull"
+  - "--label=org.opencontainers.image.created={{.Date}}"
+  - "--label=org.opencontainers.image.name={{.ProjectName}}"
+  - "--label=org.opencontainers.image.revision={{.FullCommit}}"
+  - "--label=org.opencontainers.image.source={{.GitURL}}"
+  - "--label=org.opencontainers.image.version={{.Version}}"
 checksum:
   name_template: 'checksums.txt'
 signs:
