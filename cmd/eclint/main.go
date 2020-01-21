@@ -21,6 +21,10 @@ var (
 	version = "dev"
 )
 
+const (
+	overridePrefix = "eclint_"
+)
+
 func main() { //nolint:funlen
 	flagVersion := false
 	forceColors := false
@@ -73,6 +77,9 @@ func main() { //nolint:funlen
 
 	if opt.Summary {
 		opt.ShowAllErrors = true
+	}
+
+	if opt.ShowAllErrors {
 		opt.ShowErrorQuantity = 0
 	}
 
@@ -131,6 +138,14 @@ func main() { //nolint:funlen
 		def, err := config.Load(filename)
 		if err != nil {
 			log.Error(err, "cannot open file", "filename", filename)
+			c++
+
+			break
+		}
+
+		err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
+		if err != nil {
+			log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
 			c++
 
 			break
