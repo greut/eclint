@@ -2,7 +2,6 @@ package eclint
 
 import (
 	"bytes"
-	"fmt"
 	"testing"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
@@ -42,8 +41,11 @@ without a final newline.`),
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 
-			def := &editorconfig.Definition{
+			def, err := newDefinition(&editorconfig.Definition{
 				InsertFinalNewline: &tc.InsertFinalNewline,
+			})
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			r := bytes.NewReader(tc.File)
@@ -59,8 +61,11 @@ without a final newline.`),
 			t.Parallel()
 
 			insertFinalNewline := !tc.InsertFinalNewline
-			def := &editorconfig.Definition{
+			def, err := newDefinition(&editorconfig.Definition{
 				InsertFinalNewline: &insertFinalNewline,
+			})
+			if err != nil {
+				t.Fatal(err)
 			}
 
 			r := bytes.NewReader(tc.File)
@@ -71,46 +76,6 @@ without a final newline.`),
 				}
 			}
 		})
-	}
-}
-
-func TestLintSimple(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, err := range Lint("testdata/simple/simple.txt", l) {
-		if err != nil {
-			t.Errorf("no errors where expected, got %s", err)
-		}
-	}
-}
-
-func TestLintMissing(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	errs := Lint("testdata/missing/file", l)
-	if len(errs) == 0 {
-		t.Error("an error was expected, got none")
-	}
-
-	for _, err := range errs {
-		if err == nil {
-			t.Error("an error was expected")
-		}
-	}
-}
-
-func TestLintInvalid(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	errs := Lint("testdata/invalid/.editorconfig", l)
-	if len(errs) == 0 {
-		t.Error("an error was expected, got none")
-	}
-
-	for _, err := range errs {
-		if err == nil {
-			t.Error("an error was expected")
-		}
 	}
 }
 
@@ -154,9 +119,13 @@ func TestBlockComment(t *testing.T) {
 			def.Raw["block_comment_start"] = tc.BlockCommentStart
 			def.Raw["block_comment"] = tc.BlockComment
 			def.Raw["block_comment_end"] = tc.BlockCommentEnd
+			d, err := newDefinition(def)
+			if err != nil {
+				t.Fatal(err)
+			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, "utf-8", l, def) {
+			for _, err := range validate(r, "utf-8", l, d) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
@@ -182,8 +151,6 @@ func TestBlockCommentFailure(t *testing.T) {
 		},
 	}
 
-	l := tlogr.TestLogger{}
-
 	for _, tc := range tests {
 		tc := tc
 
@@ -199,120 +166,10 @@ func TestBlockCommentFailure(t *testing.T) {
 			def.Raw["block_comment"] = tc.BlockComment
 			def.Raw["block_comment_end"] = tc.BlockCommentEnd
 
-			r := bytes.NewReader(tc.File)
-			errs := validate(r, "utf-8", l, def)
-			if len(errs) == 0 {
+			_, err := newDefinition(def)
+			if err == nil {
 				t.Fatal("one error was expected, got none")
 			}
-			if errs[0] == nil {
-				t.Errorf("no errors where expected, got %s", errs[0])
-			}
 		})
-	}
-}
-
-func TestBlockCommentValidSpec(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"a", "b"} {
-		for _, err := range Lint(fmt.Sprintf("./testdata/block_comments/%s", f), l) {
-			if err != nil {
-				t.Fatalf("no errors where expected, got %s", err)
-			}
-		}
-	}
-}
-
-func TestBlockCommentInvalidSpec(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"c"} {
-		errs := Lint(fmt.Sprintf("./testdata/block_comments/%s", f), l)
-		if len(errs) == 0 {
-			t.Errorf("one error was expected, got none")
-		}
-	}
-}
-
-func TestLintCharset(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"latin1", "utf8"} {
-		for _, err := range Lint(fmt.Sprintf("./testdata/charset/%s.txt", f), l) {
-			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
-			}
-		}
-	}
-}
-
-func TestLintImages(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"edcon_tool.png", "edcon_tool.pdf", "hello.txt.gz"} {
-		for _, err := range Lint(fmt.Sprintf("./testdata/images/%s", f), l) {
-			if err != nil {
-				t.Fatalf("no errors where expected, got %s", err)
-			}
-		}
-	}
-}
-
-func TestOverridingUsingPrefix(t *testing.T) {
-	def := &editorconfig.Definition{
-		Charset:     "utf-8 bom",
-		IndentStyle: "tab",
-		IndentSize:  "3",
-		TabWidth:    3,
-	}
-	raw := make(map[string]string)
-	raw["@_charset"] = "unset"
-	raw["@_indent_style"] = "space"
-	raw["@_indent_size"] = "4"
-	raw["@_tab_width"] = "4"
-	def.Raw = raw
-
-	err := overrideUsingPrefix(def, "@_")
-	if err != nil {
-		t.Fatal(err)
-	}
-
-	if def.Charset != "unset" {
-		t.Errorf("charset not changed, got %q", def.Charset)
-	}
-
-	if def.IndentStyle != "space" {
-		t.Errorf("indent_style not changed, got %q", def.IndentStyle)
-	}
-
-	if def.IndentSize != "4" {
-		t.Errorf("indent_size not changed, got %q", def.IndentSize)
-	}
-
-	if def.TabWidth != 4 {
-		t.Errorf("tab_width not changed, got %d", def.TabWidth)
-	}
-}
-
-func TestMaxLineLengthValidSpec(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"a", "b"} {
-		for _, err := range Lint(fmt.Sprintf("./testdata/max_line_length/%s", f), l) {
-			if err != nil {
-				t.Fatalf("no errors where expected, got %s", err)
-			}
-		}
-	}
-}
-
-func TestMaxLineLengthInvalidSpec(t *testing.T) {
-	l := tlogr.TestLogger{}
-
-	for _, f := range []string{"c"} {
-		errs := Lint(fmt.Sprintf("./testdata/max_line_length/%s", f), l)
-		if len(errs) == 0 {
-			t.Errorf("one error was expected, got none")
-		}
 	}
 }

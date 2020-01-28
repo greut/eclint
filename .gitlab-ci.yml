@@ -30,7 +30,7 @@ go test:
 eclint:
   stage: lint
   script:
-    - go build -o eclint cmd/eclint/main.go
+    - go build -o eclint gitlab.com/greut/eclint/cmd/eclint
     - ./eclint -exclude "testdata/**/*"
 
 golangci-lint:

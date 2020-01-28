@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"os"
-	"strconv"
-	"strings"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
@@ -31,64 +29,13 @@ const (
 func validate( //nolint:funlen,gocyclo
 	r io.Reader, charset string,
 	log logr.Logger,
-	def *editorconfig.Definition,
+	def *definition,
 ) []error {
-	indentSize, _ := strconv.Atoi(def.IndentSize)
-
 	var lastLine []byte
 
 	var lastIndex int
 
-	errs := make([]error, 0)
-
-	var insideBlockComment bool
-
-	var blockCommentStart []byte
-
-	var blockComment []byte
-
-	var blockCommentEnd []byte
-
-	if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
-		bs, ok := def.Raw["block_comment_start"]
-		if ok && bs != "" && bs != UnsetValue {
-			blockCommentStart = []byte(bs)
-			bc, ok := def.Raw["block_comment"]
-
-			if ok && bc != "" && bs != UnsetValue {
-				blockComment = []byte(bc)
-			}
-
-			be, ok := def.Raw["block_comment_end"]
-			if !ok || be == "" || be == UnsetValue {
-				errs = append(errs, fmt.Errorf("block_comment_end was expected, none were found"))
-			}
-
-			blockCommentEnd = []byte(be)
-		}
-	}
-
-	maxLength := 0
-	tabWidth := def.TabWidth
-
-	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != UnsetValue {
-		ml, err := strconv.Atoi(mll)
-		if err != nil || ml < 0 {
-			errs = append(errs, fmt.Errorf("max_line_length expected a non-negative number, got %q", mll))
-		}
-
-		maxLength = ml
-
-		if tabWidth <= 0 {
-			tabWidth = DefaultTabWidth
-		}
-	}
-
-	if len(errs) > 0 {
-		return errs
-	}
-
-	errs = ReadLines(r, func(index int, data []byte) error {
+	errs := ReadLines(r, func(index int, data []byte) error {
 		var err error
 
 		// The last line may not have the expected ending.
@@ -109,21 +56,21 @@ func validate( //nolint:funlen,gocyclo
 		lastLine = data
 		lastIndex = index
 
-		if def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.IndentSize != UnsetValue {
-			if insideBlockComment && blockCommentEnd != nil {
-				insideBlockComment = !isBlockCommentEnd(blockCommentEnd, data)
+		if def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.Definition.IndentSize != UnsetValue {
+			if def.InsideBlockComment && def.BlockCommentEnd != nil {
+				def.InsideBlockComment = !isBlockCommentEnd(def.BlockCommentEnd, data)
 			}
 
-			err = indentStyle(def.IndentStyle, indentSize, data)
-			if err != nil && insideBlockComment && blockComment != nil {
+			err = indentStyle(def.IndentStyle, def.IndentSize, data)
+			if err != nil && def.InsideBlockComment && def.BlockComment != nil {
 				// The indentation may fail within a block comment.
 				if ve, ok := err.(ValidationError); ok {
-					err = checkBlockComment(ve.Position, blockComment, data)
+					err = checkBlockComment(ve.Position, def.BlockComment, data)
 				}
 			}
 
-			if err == nil && !insideBlockComment && blockCommentStart != nil {
-				insideBlockComment = isBlockCommentStart(blockCommentStart, data)
+			if err == nil && !def.InsideBlockComment && def.BlockCommentStart != nil {
+				def.InsideBlockComment = isBlockCommentStart(def.BlockCommentStart, data)
 			}
 		}
 
@@ -131,7 +78,7 @@ func validate( //nolint:funlen,gocyclo
 			err = trimTrailingWhitespace(data)
 		}
 
-		if err == nil && maxLength > 0 {
+		if err == nil && def.MaxLength > 0 {
 			// Remove any BOM from the first line.
 			d := data
 			if index == 0 && charset != "" {
@@ -142,7 +89,7 @@ func validate( //nolint:funlen,gocyclo
 					}
 				}
 			}
-			err = MaxLineLength(maxLength, tabWidth, d)
+			err = MaxLineLength(def.MaxLength, def.TabWidth, d)
 		}
 
 		// Enrich the error with the line number
@@ -164,20 +111,14 @@ func validate( //nolint:funlen,gocyclo
 			lastChar = lastLine[len(lastLine)-1]
 		}
 
-		if lastChar != 0x0 && lastChar != cr && lastChar != lf {
-			if *def.InsertFinalNewline {
-				err = fmt.Errorf("missing the final newline")
-			}
-		} else {
-			if def.EndOfLine != "" {
-				err = endOfLine(def.EndOfLine, lastLine)
-			}
-
-			if err != nil {
+		if lastChar != 0x0 {
+			if lastChar != cr && lastChar != lf {
+				if *def.InsertFinalNewline {
+					err = fmt.Errorf("missing the final newline")
+				}
+			} else {
 				if !*def.InsertFinalNewline {
 					err = fmt.Errorf("found an extraneous final newline")
-				} else {
-					err = nil
 				}
 			}
 		}
@@ -196,39 +137,6 @@ func validate( //nolint:funlen,gocyclo
 	return errs
 }
 
-func overrideUsingPrefix(def *editorconfig.Definition, prefix string) error {
-	for k, v := range def.Raw {
-		if strings.HasPrefix(k, prefix) {
-			nk := k[len(prefix):]
-			def.Raw[nk] = v
-
-			switch nk {
-			case "indent_style":
-				def.IndentStyle = v
-			case "indent_size":
-				def.IndentSize = v
-			case "charset":
-				def.Charset = v
-			case "end_of_line":
-				def.EndOfLine = v
-			case "tab_width":
-				i, err := strconv.Atoi(v)
-				if err != nil {
-					return fmt.Errorf("tab_width cannot be set. %w", err)
-				}
-
-				def.TabWidth = i
-			case "trim_trailing_whitespace":
-				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
-			case "insert_final_newline":
-				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
-			}
-		}
-	}
-
-	return nil
-}
-
 // Lint does the hard work of validating the given file.
 func Lint(filename string, log logr.Logger) []error {
 	def, err := editorconfig.GetDefinitionForFilename(filename)
@@ -240,18 +148,18 @@ func Lint(filename string, log logr.Logger) []error {
 }
 
 // LintWithDefinition does the hard work of validating the given file.
-func LintWithDefinition(def *editorconfig.Definition, filename string, log logr.Logger) []error {
+func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error {
+	def, err := newDefinition(d)
+	if err != nil {
+		return []error{err}
+	}
+
 	fp, err := os.Open(filename)
 	if err != nil {
 		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
 	}
 
 	defer fp.Close()
-
-	err = overrideUsingPrefix(def, "eclint_")
-	if err != nil {
-		return []error{err}
-	}
 
 	r := bufio.NewReader(fp)
 
