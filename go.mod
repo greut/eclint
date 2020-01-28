@@ -10,6 +10,6 @@ require (
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/mattn/go-colorable v0.1.4
-	golang.org/x/crypto v0.0.0-20200117160349-530e935923ad
-	k8s.io/klog/v2 v2.0.0-20200108022340-c4f748769d6e
+	golang.org/x/crypto v0.0.0-20200128174031-69ecbb4d6d5d
+	k8s.io/klog/v2 v2.0.0-20200127113903-12be8a0d907a
 )
