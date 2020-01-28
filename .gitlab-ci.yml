@@ -2,7 +2,7 @@ image: golang:1.13-alpine
 
 variables:
   GORELEASER_IMAGE: goreleaser/goreleaser:latest
-  NANCY_VERSION: v0.0.40
+  NANCY_VERSION: v0.0.41
   GIT_DEPTH: "0"
 
 stages:
