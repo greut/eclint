@@ -111,20 +111,14 @@ func validate( //nolint:funlen,gocyclo
 			lastChar = lastLine[len(lastLine)-1]
 		}
 
-		if lastChar != 0x0 && lastChar != cr && lastChar != lf {
-			if *def.InsertFinalNewline {
-				err = fmt.Errorf("missing the final newline")
-			}
-		} else {
-			if def.EndOfLine != "" {
-				err = endOfLine(def.EndOfLine, lastLine)
-			}
-
-			if err != nil {
+		if lastChar != 0x0 {
+			if lastChar != cr && lastChar != lf {
+				if *def.InsertFinalNewline {
+					err = fmt.Errorf("missing the final newline")
+				}
+			} else {
 				if !*def.InsertFinalNewline {
 					err = fmt.Errorf("found an extraneous final newline")
-				} else {
-					err = nil
 				}
 			}
 		}

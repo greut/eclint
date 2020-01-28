@@ -1,0 +1,7 @@
+root = true
+
+[*.txt]
+insert_final_newline = true
+
+[*.md]
+insert_final_newline = false
