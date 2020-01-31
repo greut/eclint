@@ -1,4 +1,4 @@
-image: golang:1.13-alpine
+image: golang:1.13-buster
 
 variables:
   GORELEASER_IMAGE: goreleaser/goreleaser:latest
@@ -11,13 +11,11 @@ stages:
   - check
   - snapshot
 
-before_script:
-  - apk --update add curl docker-cli git || echo ":D"
-
 go test:
   stage: test
   script:
-    - go test -v
+    - go test -v ./...
+    - go test -v ./...
       -cover -covermode atomic
       -coverprofile coverage.out
       -json > test-report.json
@@ -37,7 +35,8 @@ golangci-lint:
   stage: lint
   image: golangci/golangci-lint
   script:
-    - golangci-lint run -v
+    - golangci-lint run ./...
+    - golangci-lint run -v ./...
       --issues-exit-code 0
       --out-format checkstyle > report.xml
   artifacts:
@@ -63,7 +62,7 @@ sonarcloud check:
   script:
     - sonar-scanner
       -Dsonar.projectVersion=$(git describe --abbrev=0 --tags)
-      -Dsonar.qualitygate.wait=true
+      -Dsonar.qualitygate.wait=true  # this does nothing yet
 
 go-mod-outdated:
   stage: check
@@ -78,6 +77,8 @@ goreleaser snapshot:
   variables:
     DOCKER_HOST: tcp://docker:2375
   script:
+    - apt-get update -y
+    - apt-get install -qy docker.io
     - curl -sfL https://install.goreleaser.com/github.com/goreleaser/goreleaser.sh | sh
     - bin/goreleaser
       --snapshot --skip-sign

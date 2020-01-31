@@ -27,7 +27,7 @@ const (
 
 func main() { //nolint:funlen
 	flagVersion := false
-	forceColors := false
+	color := "auto"
 	cpuprofile := ""
 	memprofile := ""
 	log := klogr.New()
@@ -45,8 +45,7 @@ func main() { //nolint:funlen
 	// Flags
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
-	flag.BoolVar(&opt.NoColors, "no_colors", false, "disable color support detection")
-	flag.BoolVar(&forceColors, "force_colors", false, "force colors")
+	flag.StringVar(&color, "color", color, `use color when printing; can be "always", "auto", or "never"`)
 	flag.BoolVar(&opt.Summary, "summary", false, "enable the summary view")
 	flag.BoolVar(
 		&opt.ShowAllErrors,
@@ -70,9 +69,11 @@ func main() { //nolint:funlen
 		return
 	}
 
-	if forceColors {
-		opt.NoColors = false
+	switch color {
+	case "always":
 		opt.IsTerminal = true
+	case "never":
+		opt.NoColors = true
 	}
 
 	if opt.Summary {
