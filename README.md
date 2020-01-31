@@ -39,15 +39,14 @@ $ eclint -exclude "testdata/**/*"
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
-- [Docker images](https://hub.docker.com/r/greut/eclint)
-- colored output _à la_ ripgrep (use `-no_colors` to disable, or `-force_colors` to skip detection)
+- [Docker images](https://hub.docker.com/r/greut/eclint) (also on GitHub and GitLab registries)
+- colored output (use `-color`: `never` to disable and `always` to skip detection)
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
 - binary file detection (however quite basic)
 
 ## Missing features
 
-- basic `//nolint` [suffix](https://github.com/golangci/golangci-lint#nolint)
 - `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
 - ability to fix
@@ -79,8 +78,10 @@ Two options: `-cpuprofile <file>` and `-memprofile <file>`, will produce the app
 - [chardet](https://github.com/gogs/chardet), charset detection
 - [editorconfig-core-go](https://github.com/editorconfig/editorconfig-core-go), `.editorconfig` parsing
 - [go-colorable](https://github.com/mattn/go-colorable), colored output on Windows (too soon)
+- [go-mod-outdated](https://github.com/psampaz/go-mod-outdated)
 - [golangci-lint](https://github.com/golangci/golangci-lint), Go linters
 - [goreleaser](https://goreleaser.com/)
 - [klogr](https://github.com/kubernetes/klog/tree/master/klogr)
+- [nancy](https://github.com/sonatype-nexus-community/nancy)
 
 [dsl]: https://github.com/editorconfig/editorconfig/wiki/EditorConfig-Properties#ideas-for-domain-specific-properties
