@@ -2,7 +2,7 @@ module gitlab.com/greut/eclint
 
 go 1.13
 
-replace github.com/editorconfig/editorconfig-core-go/v2 => github.com/greut/editorconfig-core-go/v2 v2.0.0-20200119154652-31109b0550dd
+replace github.com/editorconfig/editorconfig-core-go/v2 => github.com/greut/editorconfig-core-go/v2 v2.0.0-20200201103819-93b20009932a
 
 require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.2.2
