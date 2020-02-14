@@ -2,10 +2,8 @@ module gitlab.com/greut/eclint
 
 go 1.13
 
-replace github.com/editorconfig/editorconfig-core-go/v2 => github.com/greut/editorconfig-core-go/v2 v2.0.0-20200201103819-93b20009932a
-
 require (
-	github.com/editorconfig/editorconfig-core-go/v2 v2.2.2
+	github.com/editorconfig/editorconfig-core-go/v2 v2.3.0
 	github.com/go-logr/logr v0.1.0
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
