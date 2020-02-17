@@ -107,6 +107,7 @@ func GitLsFilesContext(ctx context.Context, path string) (<-chan string, <-chan 
 			}
 
 			errChan <- err
+
 			return
 		}
 

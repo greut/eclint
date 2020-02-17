@@ -90,6 +90,7 @@ func main() { //nolint:funlen
 		if err != nil {
 			log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
 			flag.Usage()
+
 			return
 		}
 	}
