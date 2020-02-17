@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"os"
@@ -84,6 +85,15 @@ func main() { //nolint:funlen
 		opt.ShowErrorQuantity = 0
 	}
 
+	if opt.Exclude != "" {
+		_, err := editorconfig.FnmatchCase(opt.Exclude, "dummy")
+		if err != nil {
+			log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
+			flag.Usage()
+			return
+		}
+	}
+
 	if cpuprofile != "" {
 		f, err := os.Create(cpuprofile)
 		if err != nil {
@@ -101,62 +111,64 @@ func main() { //nolint:funlen
 
 	args := flag.Args()
 
-	files, err := eclint.ListFiles(log, args...)
-	if err != nil {
-		log.Error(err, "error while handling the arguments")
-		flag.Usage()
-		os.Exit(1)
-
-		return
-	}
-
-	log.V(1).Info("files", "count", len(files), "exclude", opt.Exclude)
-
-	config := &editorconfig.Config{}
-
-	if len(files) > 0 {
-		config.Parser = editorconfig.NewCachedParser()
+	config := &editorconfig.Config{
+		Parser: editorconfig.NewCachedParser(),
 	}
 
 	c := 0
 
-	for _, filename := range files {
-		// Skip excluded files
-		if opt.Exclude != "" {
-			ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
+	fileChan, errChan := eclint.ListFilesContext(context.Background(), log, args...)
+outter:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok {
+				log.Error(err, "cannot list files")
+			}
+			break outter
+
+		case filename, ok := <-fileChan:
+			if !ok {
+				break outter
+			}
+
+			// Skip excluded files
+			if opt.Exclude != "" {
+				ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
+				if err != nil {
+					log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
+					c++
+
+					break
+				}
+
+				if ok {
+					continue
+				}
+			}
+
+			def, err := config.Load(filename)
 			if err != nil {
-				log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
+				log.Error(err, "cannot open file", "filename", filename)
 				c++
 
 				break
 			}
 
-			if ok {
-				continue
+			err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
+			if err != nil {
+				log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
+				c++
+
+				break
 			}
-		}
 
-		def, err := config.Load(filename)
-		if err != nil {
-			log.Error(err, "cannot open file", "filename", filename)
-			c++
+			errs := eclint.LintWithDefinition(def, filename, opt.Log.WithValues("filename", filename))
+			c += len(errs)
 
-			break
-		}
-
-		err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
-		if err != nil {
-			log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
-			c++
-
-			break
-		}
-
-		errs := eclint.LintWithDefinition(def, filename, opt.Log.WithValues("filename", filename))
-		c += len(errs)
-
-		if err := eclint.PrintErrors(opt, filename, errs); err != nil {
-			log.Error(err, "print errors failure", "filename", filename)
+			if err := eclint.PrintErrors(opt, filename, errs); err != nil {
+				log.Error(err, "print errors failure", "filename", filename)
+			}
 		}
 	}
 
