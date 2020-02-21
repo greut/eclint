@@ -25,77 +25,74 @@ func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (str
 		return "", false, err
 	}
 
-	if cs == "" {
-		ok, er := probeMagic(bs, log)
-		if !ok && er == nil {
-			ok, er = probeBinary(bs, log)
-		}
-
-		if er != nil {
-			return "", false, fmt.Errorf("cannot probe binary. %w", er)
-		}
-
-		return "", ok, nil
+	if cs != "" {
+		return cs, false, nil
 	}
 
-	return cs, false, nil
+	isBinary := probeMagic(bs, log)
+
+	if !isBinary {
+		isBinary = probeBinary(bs)
+	}
+
+	return cs, isBinary, nil
 }
 
 // probeMagic searches for some text-baesd binary files such as PDF.
-func probeMagic(bs []byte, log logr.Logger) (bool, error) {
+func probeMagic(bs []byte, log logr.Logger) bool {
 	if bytes.HasPrefix(bs, []byte("%PDF-")) {
 		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
-		return true, nil
+		return true
 	}
 
-	return false, nil
+	return false
 }
 
 // probeBinary tells if the reader is likely to be binary
 //
 // checking for \0 is a weak strategy.
-func probeBinary(bs []byte, log logr.Logger) (bool, error) {
+func probeBinary(bs []byte) bool {
 	cont := 0
 
-outer:
-	for _, b := range bs {
+	l := len(bs)
+	for i := 0; i < l; i++ {
+		b := bs[i]
+
 		switch {
-		case b>>6 == 0x02:
-			cont--
+		case b&0b1000_0000 == 0x00:
+			continue
 
-			// found continuation, but no cont available, break
-			if cont < 0 {
-				break outer
-			}
+		case b&0b1100_0000 == 0b1000_0000:
+			// found continuation, probably binary
+			return true
 
-		case b>>5 == 0x06:
+		case b&0b1110_0000 == 0b1100_0000:
 			// found leading of two bytes
-			if cont > 0 {
-				break outer
-			}
-
 			cont = 1
-		case b>>4 == 0x0e:
+		case b&0b1111_0000 == 0b1110_0000:
 			// found leading of three bytes
-			if cont > 0 {
-				break outer
-			}
-
 			cont = 2
-		case b>>3 == 0x1e:
+		case b&0b1111_1000 == 0b1111_0000:
 			// found leading of four bytes
-			if cont > 0 {
-				break outer
-			}
-
 			cont = 3
-		case b == '\000':
-			cont = -1
-			break outer
+		case b == 0x00:
+			// found NUL byte, probably binary
+			return true
+		}
+
+		for ; cont > 0 && i < l-1; cont-- {
+			i++
+			b = bs[i]
+
+			if b&0b1100_0000 != 0b1000_0000 {
+				// found something different than a continuation,
+				// probably binary
+				return true
+			}
 		}
 	}
 
-	return cont != 0, nil
+	return cont > 0
 }
 
 func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
