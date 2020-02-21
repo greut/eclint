@@ -142,6 +142,10 @@ func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 	// Sanity check that the file can be read.
 	_, err := r.Peek(1)
 	if err != nil && err != io.EOF {
+		if err == io.EOF {
+			return false, nil
+		}
+
 		fi, err := fp.Stat()
 		if err != nil {
 			return false, err
@@ -154,7 +158,7 @@ func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 		return false, err
 	}
 
-	return err != io.EOF, nil
+	return true, nil
 }
 
 // detectCharsetUsingBOM checks the charset via the first bytes of the first line

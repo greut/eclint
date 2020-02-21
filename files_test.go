@@ -84,7 +84,12 @@ func TestListFilesNoGit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := eclint.ListFiles(l)
+	_, err = eclint.ListFiles(l)
+	if err == nil {
+		t.Errorf("an error was expected, got nothing")
+	}
+
+	fs, err := eclint.ListFiles(l, ".")
 	if err != nil {
 		t.Fatal(err)
 	}
