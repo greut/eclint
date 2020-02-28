@@ -2,7 +2,7 @@ image: golang:1.13-buster
 
 variables:
   GORELEASER_IMAGE: goreleaser/goreleaser:latest
-  NANCY_VERSION: v0.1.0
+  NANCY_VERSION: v0.1.1
   GIT_DEPTH: "0"
 
 stages:
