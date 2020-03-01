@@ -1,8 +1,7 @@
 image: golang:1.14-buster
 
 variables:
-  GORELEASER_IMAGE: goreleaser/goreleaser:latest
-  NANCY_VERSION: v0.1.1
+  NANCY_VERSION: v0.1.5
   GIT_DEPTH: "0"
 
 stages:
