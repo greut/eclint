@@ -1,8 +1,6 @@
 image: golang:1.14-buster
 
 variables:
-  GORELEASER_IMAGE: goreleaser/goreleaser:latest
-  NANCY_VERSION: v0.1.5
   GIT_DEPTH: "0"
 
 stages:
@@ -45,11 +43,9 @@ golangci-lint:
 
 nancy:
   stage: check
+  image: sonatypecommunity/nancy
   script:
-    - curl -sL -o nancy
-      "https://github.com/sonatype-nexus-community/nancy/releases/download/${NANCY_VERSION}/nancy-linux.amd64-${NANCY_VERSION}"
-    - chmod +x nancy
-    - ./nancy go.sum
+    - nancy go.sum
 
 sonarcloud check:
   stage: check
