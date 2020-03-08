@@ -20,22 +20,22 @@ func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (str
 		return "", false, err
 	}
 
-	cs, err := probeCharset(bs, charset, log)
-	if err != nil {
-		return "", false, err
-	}
-
-	if cs != "" {
-		return cs, false, nil
-	}
-
 	isBinary := probeMagic(bs, log)
 
 	if !isBinary {
 		isBinary = probeBinary(bs)
 	}
 
-	return cs, isBinary, nil
+	if isBinary {
+		return "", true, nil
+	}
+
+	cs, err := probeCharset(bs, charset, log)
+	if err != nil {
+		return "", false, err
+	}
+
+	return cs, false, nil
 }
 
 // probeMagic searches for some text-baesd binary files such as PDF.
