@@ -50,5 +50,5 @@ gopkg.in/ini.v1 v1.51.1/go.mod h1:pNLf8WUiyNEtQjuu5G5vTm06TEv9tsIgeAvK8hOrP4k=
 gopkg.in/yaml.v2 v2.2.2/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
 gopkg.in/yaml.v2 v2.2.7 h1:VUgggvou5XRW9mHwD/yXxIYSMtY0zoKQf/v226p2nyo=
 gopkg.in/yaml.v2 v2.2.7/go.mod h1:hI93XBmqTisBFMUTm0b8Fm+jr3Dg1NNxqwp+5A1VGuI=
-k8s.io/klog/v2 v2.0.0-20200127113903-12be8a0d907a h1:Mcu95Qw9AYB0+JYxeTNY0aooqKFu8zdFVDr1Kigx5iI=
-k8s.io/klog/v2 v2.0.0-20200127113903-12be8a0d907a/go.mod h1:q4PVo0BneA7GsUJvFqoEvOCVmYJP0c5Y4VxrAYpJrIk=
+k8s.io/klog/v2 v2.0.0-20200309112135-3c831a885308 h1:JoQDJoREhSqz+nO73uMmhxj2me3D0FWKghmXlb2k6Hc=
+k8s.io/klog/v2 v2.0.0-20200309112135-3c831a885308/go.mod h1:q4PVo0BneA7GsUJvFqoEvOCVmYJP0c5Y4VxrAYpJrIk=
