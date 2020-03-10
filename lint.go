@@ -25,15 +25,122 @@ const (
 	Utf8 = "utf-8"
 )
 
+// Lint does the hard work of validating the given file.
+func Lint(filename string, log logr.Logger) []error {
+	def, err := editorconfig.GetDefinitionForFilename(filename)
+	if err != nil {
+		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
+	}
+
+	return LintWithDefinition(def, filename, log)
+}
+
+// LintWithDefinition does the hard work of validating the given file.
+func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error {
+	def, err := newDefinition(d)
+	if err != nil {
+		return []error{err}
+	}
+
+	fp, err := os.Open(filename)
+	if err != nil {
+		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
+	}
+
+	defer fp.Close()
+
+	r := bufio.NewReader(fp)
+
+	ok, err := probeReadable(fp, r)
+	if err != nil {
+		return []error{fmt.Errorf("cannot read %s. %w", filename, err)}
+	}
+
+	if !ok {
+		log.V(2).Info("skipped unreadable or empty file")
+		return nil
+	}
+
+	charset, isBinary, err := ProbeCharsetOrBinary(r, def.Charset, log)
+	if err != nil {
+		return []error{err}
+	}
+
+	if isBinary {
+		log.V(2).Info("binary file detected and skipped")
+		return nil
+	}
+
+	log.V(2).Info("charset probed", "charset", charset)
+
+	errs := validate(r, charset, log, def)
+
+	// Enrich the errors with the filename
+	for i, err := range errs {
+		if ve, ok := err.(ValidationError); ok {
+			ve.Filename = filename
+			errs[i] = ve
+		} else if err != nil {
+			errs[i] = err
+		}
+	}
+
+	return errs
+}
+
 // validate is where the validations rules are applied
-func validate( //nolint:funlen,gocyclo
+func validate(
 	r io.Reader, charset string,
 	log logr.Logger,
 	def *definition,
 ) []error {
-	var lastLine []byte
+	lastIndex, lastLine, errs := validateLines(r, charset, log, def)
 
+	if lastLine != nil && def.InsertFinalNewline != nil {
+		var err error
+
+		var lastChar byte
+
+		if len(lastLine) > 0 {
+			lastChar = lastLine[len(lastLine)-1]
+		}
+
+		if lastChar != 0x0 {
+			if lastChar != cr && lastChar != lf {
+				if *def.InsertFinalNewline {
+					err = fmt.Errorf("missing the final newline")
+				}
+			} else {
+				if !*def.InsertFinalNewline {
+					err = fmt.Errorf("found an extraneous final newline")
+				}
+			}
+		}
+
+		if err != nil {
+			if ve, ok := err.(ValidationError); ok {
+				ve.Line = lastLine
+				ve.Index = lastIndex
+				errs = append(errs, ve)
+			} else {
+				errs = append(errs, err)
+			}
+		}
+	}
+
+	return errs
+}
+
+// validateLines performs the validation on the generic lines and
+// return the lastLine and the lastIndex for the remainaing validations.
+func validateLines( //nolint:funlen
+	r io.Reader, charset string,
+	log logr.Logger,
+	def *definition,
+) (int, []byte, []error) {
 	var lastIndex int
+
+	var lastLine []byte
 
 	errs := ReadLines(r, func(index int, data []byte) error {
 		var err error
@@ -102,100 +209,5 @@ func validate( //nolint:funlen,gocyclo
 		return err
 	})
 
-	if lastLine != nil && def.InsertFinalNewline != nil {
-		var err error
-
-		var lastChar byte
-
-		if len(lastLine) > 0 {
-			lastChar = lastLine[len(lastLine)-1]
-		}
-
-		if lastChar != 0x0 {
-			if lastChar != cr && lastChar != lf {
-				if *def.InsertFinalNewline {
-					err = fmt.Errorf("missing the final newline")
-				}
-			} else {
-				if !*def.InsertFinalNewline {
-					err = fmt.Errorf("found an extraneous final newline")
-				}
-			}
-		}
-
-		if err != nil {
-			if ve, ok := err.(ValidationError); ok {
-				ve.Line = lastLine
-				ve.Index = lastIndex
-				errs = append(errs, ve)
-			} else {
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	return errs
-}
-
-// Lint does the hard work of validating the given file.
-func Lint(filename string, log logr.Logger) []error {
-	def, err := editorconfig.GetDefinitionForFilename(filename)
-	if err != nil {
-		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
-	}
-
-	return LintWithDefinition(def, filename, log)
-}
-
-// LintWithDefinition does the hard work of validating the given file.
-func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error {
-	def, err := newDefinition(d)
-	if err != nil {
-		return []error{err}
-	}
-
-	fp, err := os.Open(filename)
-	if err != nil {
-		return []error{fmt.Errorf("cannot open %s. %w", filename, err)}
-	}
-
-	defer fp.Close()
-
-	r := bufio.NewReader(fp)
-
-	ok, err := probeReadable(fp, r)
-	if err != nil {
-		return []error{fmt.Errorf("cannot read %s. %w", filename, err)}
-	}
-
-	if !ok {
-		log.V(2).Info("skipped unreadable or empty file")
-		return nil
-	}
-
-	charset, isBinary, err := ProbeCharsetOrBinary(r, def.Charset, log)
-	if err != nil {
-		return []error{err}
-	}
-
-	if isBinary {
-		log.V(2).Info("binary file detected and skipped")
-		return nil
-	}
-
-	log.V(2).Info("charset probed", "charset", charset)
-
-	errs := validate(r, charset, log, def)
-
-	// Enrich the errors with the filename
-	for i, err := range errs {
-		if ve, ok := err.(ValidationError); ok {
-			ve.Filename = filename
-			errs[i] = ve
-		} else if err != nil {
-			errs[i] = err
-		}
-	}
-
-	return errs
+	return lastIndex, lastLine, errs
 }
