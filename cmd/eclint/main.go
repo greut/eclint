@@ -32,6 +32,9 @@ func main() { //nolint:funlen
 	cpuprofile := ""
 	memprofile := ""
 	log := klogr.New()
+
+	defer klog.Flush()
+
 	opt := eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
