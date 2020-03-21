@@ -47,9 +47,10 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 			counter++
 
 			if opt.ShowErrorQuantity > 0 && counter >= opt.ShowErrorQuantity && len(errors) > counter {
-				fmt.Fprintln(
+				fmt.Fprintf(
 					stdout,
-					fmt.Sprintf(" ... skipping at most %s errors", au.BrightRed(strconv.Itoa(len(errors)-counter))),
+					" ... skipping at most %s errors\n",
+					au.BrightRed(strconv.Itoa(len(errors)-counter)),
 				)
 
 				break
