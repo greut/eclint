@@ -8,7 +8,7 @@ require (
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/mattn/go-colorable v0.1.6
-	golang.org/x/crypto v0.0.0-20200320181102-891825fb96df
+	golang.org/x/crypto v0.0.0-20200323165209-0ec3e9974c59
 	gopkg.in/ini.v1 v1.55.0 // indirect
-	k8s.io/klog/v2 v2.0.0-20200309112135-3c831a885308
+	k8s.io/klog/v2 v2.0.0-20200327143823-c91ea2cba2c8
 )
