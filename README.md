@@ -1,13 +1,18 @@
 # eclint - EditorConfig linter ★
 
-An alternative to the [JavaScript _eclint_](https://github.com/jedmao/eclint) written in Go.
+An faster alternative to the [JavaScript _eclint_](https://github.com/jedmao/eclint) written in Go.
 
-**Work in progress**
+## Installation
+
+- [Archlinux](https://aur.archlinux.org/packages/eclint/)
+- [Docker](https://hub.docker.com/r/greut/eclint)
+- [GitHub action](https://github.com/greut/eclint-action/)
+- [Manual installs](https://gitlab.com/greut/eclint/-/releases)
 
 ## Usage
 
 ```
-$ go install gitlab.com/greut/eclint
+$ go install gitlab.com/greut/eclint/cmd/eclint
 
 $ eclint -version
 ```
@@ -70,7 +75,7 @@ The methodology is to run the linter against some big repositories `time eclint 
 
 ### Profiling
 
-Two options: `-cpuprofile <file>` and `-memprofile <file>`, will produce the appropriate _pprof_ files. At the time being a good chunk of time is spent into the `editorconfig-core-go` library as it has no sense of definition caching.
+Two options: `-cpuprofile <file>` and `-memprofile <file>`, will produce the appropriate _pprof_ files.
 
 ## Libraries and tools
 
