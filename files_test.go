@@ -30,6 +30,8 @@ func TestListFiles(t *testing.T) {
 }
 
 func TestListFilesNoArgs(t *testing.T) {
+	skipNoGit(t)
+
 	l := tlogr.TestLogger{}
 	d := testdataSimple
 
@@ -114,6 +116,8 @@ func TestWalk(t *testing.T) {
 }
 
 func TestGitLsFiles(t *testing.T) {
+	skipNoGit(t)
+
 	l := tlogr.TestLogger{}
 	d := testdataSimple
 
@@ -128,6 +132,8 @@ func TestGitLsFiles(t *testing.T) {
 }
 
 func TestGitLsFilesFailure(t *testing.T) {
+	skipNoGit(t)
+
 	l := tlogr.TestLogger{}
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
@@ -139,5 +145,11 @@ func TestGitLsFilesFailure(t *testing.T) {
 	_, err = eclint.GitLsFiles(l, d)
 	if err == nil {
 		t.Error("an error was expected")
+	}
+}
+
+func skipNoGit(t *testing.T) {
+	if _, err := os.Stat(".git"); os.IsNotExist(err) {
+		t.Skip("skipping test requiring .git to be present")
 	}
 }
