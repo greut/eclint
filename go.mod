@@ -10,5 +10,5 @@ require (
 	github.com/mattn/go-colorable v0.1.6
 	golang.org/x/crypto v0.0.0-20200403201458-baeed622b8d8
 	gopkg.in/ini.v1 v1.55.0 // indirect
-	k8s.io/klog/v2 v2.0.0-20200403082346-c5e069ae7c58
+	k8s.io/klog/v2 v2.0.0
 )
