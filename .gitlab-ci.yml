@@ -1,7 +1,7 @@
 image: golang:1.14-buster
 
 variables:
-  NANCY_VERSION: v0.1.17
+  NANCY_VERSION: v0.1
   GIT_DEPTH: "0"
 
 stages:
@@ -44,7 +44,7 @@ golangci-lint:
 
 nancy:
   stage: check
-  image: greut/nancy:alpine
+  image: sonatypecommunity/nancy:${NANCY_VERSION}-alpine
   script:
     - nancy go.sum
 
