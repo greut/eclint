@@ -49,7 +49,7 @@ without a final newline.`),
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, "utf-8", l, def) {
+			for _, err := range validate(r, -1, "utf-8", l, def) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
@@ -70,7 +70,7 @@ without a final newline.`),
 
 			r := bytes.NewReader(tc.File)
 
-			for _, err := range validate(r, "utf-8", l, def) {
+			for _, err := range validate(r, -1, "utf-8", l, def) {
 				if err == nil {
 					t.Error("an error was expected")
 				}
@@ -125,7 +125,7 @@ func TestBlockComment(t *testing.T) {
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, "utf-8", l, d) {
+			for _, err := range validate(r, -1, "utf-8", l, d) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
