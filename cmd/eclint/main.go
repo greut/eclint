@@ -50,11 +50,11 @@ func main() { //nolint:funlen
 	klog.InitFlags(nil)
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.StringVar(&color, "color", color, `use color when printing; can be "always", "auto", or "never"`)
-	flag.BoolVar(&opt.Summary, "summary", false, "enable the summary view")
+	flag.BoolVar(&opt.Summary, "summary", opt.Summary, "enable the summary view")
 	flag.BoolVar(
 		&opt.ShowAllErrors,
 		"show_all_errors",
-		false,
+		opt.ShowAllErrors,
 		fmt.Sprintf("display all errors for each file (otherwise %d are kept)", opt.ShowErrorQuantity),
 	)
 	flag.IntVar(
@@ -63,9 +63,9 @@ func main() { //nolint:funlen
 		opt.ShowErrorQuantity,
 		"display only the first n errors (0 means all)",
 	)
-	flag.StringVar(&opt.Exclude, "exclude", "", "paths to exclude")
-	flag.StringVar(&cpuprofile, "cpuprofile", "", "write cpu profile to `file`")
-	flag.StringVar(&memprofile, "memprofile", "", "write mem profile to `file`")
+	flag.StringVar(&opt.Exclude, "exclude", opt.Exclude, "paths to exclude")
+	flag.StringVar(&cpuprofile, "cpuprofile", cpuprofile, "write cpu profile to `file`")
+	flag.StringVar(&memprofile, "memprofile", memprofile, "write mem profile to `file`")
 	flag.Parse()
 
 	if flagVersion {
@@ -136,6 +136,8 @@ outter:
 				break outter
 			}
 
+			log := opt.Log.WithValues("filename", filename)
+
 			// Skip excluded files
 			if opt.Exclude != "" {
 				ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
@@ -153,7 +155,7 @@ outter:
 
 			def, err := config.Load(filename)
 			if err != nil {
-				log.Error(err, "cannot open file", "filename", filename)
+				log.Error(err, "cannot open file")
 				c++
 
 				break
@@ -167,11 +169,11 @@ outter:
 				break
 			}
 
-			errs := eclint.LintWithDefinition(def, filename, opt.Log.WithValues("filename", filename))
+			errs := eclint.LintWithDefinition(def, filename, log)
 			c += len(errs)
 
 			if err := eclint.PrintErrors(opt, filename, errs); err != nil {
-				log.Error(err, "print errors failure", "filename", filename)
+				log.Error(err, "print errors failure")
 			}
 		}
 	}

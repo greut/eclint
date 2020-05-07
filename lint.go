@@ -36,11 +36,23 @@ func Lint(filename string, log logr.Logger) []error {
 }
 
 // LintWithDefinition does the hard work of validating the given file.
-func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error {
+func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error { // nolint: funlen
 	def, err := newDefinition(d)
 	if err != nil {
 		return []error{err}
 	}
+
+	stat, err := os.Stat(filename)
+	if err != nil {
+		return []error{fmt.Errorf("cannot stat %s. %w", filename, err)}
+	}
+
+	if stat.IsDir() {
+		log.V(2).Info("skipped directory")
+		return nil
+	}
+
+	fileSize := stat.Size()
 
 	fp, err := os.Open(filename)
 	if err != nil {
@@ -73,7 +85,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 	log.V(2).Info("charset probed", "charset", charset)
 
-	errs := validate(r, charset, log, def)
+	errs := validate(r, fileSize, charset, log, def)
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
@@ -89,81 +101,49 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 }
 
 // validate is where the validations rules are applied
-func validate(
-	r io.Reader, charset string,
+func validate( // nolint: funlen,gocyclo
+	r io.Reader,
+	fileSize int64,
+	charset string,
 	log logr.Logger,
 	def *definition,
 ) []error {
-	lastIndex, lastLine, errs := validateLines(r, charset, log, def)
-
-	if lastLine != nil && def.InsertFinalNewline != nil {
+	return ReadLines(r, fileSize, func(index int, data []byte, isEOF bool) error {
 		var err error
 
-		var lastChar byte
+		if isEOF {
+			if def.InsertFinalNewline != nil {
+				var lastChar byte
 
-		if len(lastLine) > 0 {
-			lastChar = lastLine[len(lastLine)-1]
-		}
-
-		if lastChar != 0x0 {
-			if lastChar != cr && lastChar != lf {
-				if *def.InsertFinalNewline {
-					err = fmt.Errorf("missing the final newline")
+				if len(data) > 0 {
+					lastChar = data[len(data)-1]
 				}
-			} else {
-				if !*def.InsertFinalNewline {
-					err = fmt.Errorf("found an extraneous final newline")
+
+				if lastChar != 0x0 {
+					if lastChar != cr && lastChar != lf {
+						if *def.InsertFinalNewline {
+							err = ValidationError{
+								Message:  "missing the final newline",
+								Position: len(data),
+							}
+						}
+					} else {
+						if !*def.InsertFinalNewline {
+							err = ValidationError{
+								Message:  "found an extraneous final newline",
+								Position: len(data),
+							}
+						}
+					}
 				}
 			}
-		}
-
-		if err != nil {
-			if ve, ok := err.(ValidationError); ok {
-				ve.Line = lastLine
-				ve.Index = lastIndex
-				errs = append(errs, ve)
-			} else {
-				errs = append(errs, err)
-			}
-		}
-	}
-
-	return errs
-}
-
-// validateLines performs the validation on the generic lines and
-// return the lastLine and the lastIndex for the remainaing validations.
-func validateLines( //nolint:funlen
-	r io.Reader, charset string,
-	log logr.Logger,
-	def *definition,
-) (int, []byte, []error) {
-	var lastIndex int
-
-	var lastLine []byte
-
-	errs := ReadLines(r, func(index int, data []byte) error {
-		var err error
-
-		// The last line may not have the expected ending.
-		if lastLine != nil && def.EndOfLine != "" && def.EndOfLine != UnsetValue {
-			err = endOfLine(def.EndOfLine, lastLine)
-			// XXX not so nice hack
-			if ve, ok := err.(ValidationError); ok {
-				ve.Line = lastLine
-				ve.Index = lastIndex
-
-				lastLine = data
-				lastIndex = index
-
-				return ve
+		} else {
+			if def.EndOfLine != "" && def.EndOfLine != UnsetValue {
+				err = endOfLine(def.EndOfLine, data)
 			}
 		}
 
-		lastLine = data
-		lastIndex = index
-
-		if def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.Definition.IndentSize != UnsetValue {
+		if err == nil && def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.Definition.IndentSize != UnsetValue {
 			if def.InsideBlockComment && def.BlockCommentEnd != nil {
 				def.InsideBlockComment = !isBlockCommentEnd(def.BlockCommentEnd, data)
 			}
@@ -208,6 +188,4 @@ func validateLines( //nolint:funlen
 
 		return err
 	})
-
-	return lastIndex, lastLine, errs
 }

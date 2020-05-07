@@ -8,7 +8,7 @@ import (
 // LineFunc is the callback for a line.
 //
 // It returns the line number starting from zero.
-type LineFunc func(int, []byte) error
+type LineFunc func(int, []byte, bool) error
 
 // SplitLines works like bufio.ScanLines while keeping the line endings.
 func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
@@ -45,10 +45,12 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 // Line numbering starts at 0. Scanner is pretty smart an will reuse
 // its memory structure. This is somehing we explicitly avoid by copying
 // the content to a new slice.
-func ReadLines(r io.Reader, fn LineFunc) []error {
+func ReadLines(r io.Reader, fileSize int64, fn LineFunc) []error {
 	errs := make([]error, 0)
 	sc := bufio.NewScanner(r)
 	sc.Split(SplitLines)
+
+	var read int64 = 0
 
 	i := 0
 
@@ -58,7 +60,9 @@ func ReadLines(r io.Reader, fn LineFunc) []error {
 
 		copy(line, l)
 
-		if err := fn(i, line); err != nil {
+		read += int64(len(line))
+
+		if err := fn(i, line, read == fileSize); err != nil {
 			errs = append(errs, err)
 		}
 		i++
