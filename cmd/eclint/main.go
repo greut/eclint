@@ -128,8 +128,8 @@ outter:
 		case err, ok := <-errChan:
 			if ok {
 				log.Error(err, "cannot list files")
+				break outter
 			}
-			break outter
 
 		case filename, ok := <-fileChan:
 			if !ok {
