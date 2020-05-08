@@ -108,7 +108,7 @@ func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
 
 		if charset != "" && cs != charset {
 			return "", ValidationError{
-				Message: fmt.Sprintf("no %s prefix were found (got %q)", charset, cs),
+				Message: fmt.Sprintf("no %s prefix were found, got %q", charset, cs),
 			}
 		}
 

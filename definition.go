@@ -99,9 +99,9 @@ func OverrideDefinitionUsingPrefix(def *editorconfig.Definition, prefix string) 
 
 				def.TabWidth = i
 			case "trim_trailing_whitespace":
-				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
+				return fmt.Errorf("%v cannot be overridden yet, PR welcome", nk)
 			case "insert_final_newline":
-				return fmt.Errorf("%v cannot be overridden yet, pr welcome", nk)
+				return fmt.Errorf("%v cannot be overridden yet, PR welcome", nk)
 			}
 		}
 	}
