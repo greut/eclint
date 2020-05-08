@@ -20,15 +20,15 @@ func PrintErrors(opt Option, filename string, errors []error) error {
 	for _, err := range errors {
 		if err != nil {
 			if counter == 0 && !opt.Summary {
-				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename))
+				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename).Bold())
 			}
 
 			if ve, ok := err.(ValidationError); ok {
 				log.V(4).Info("lint error", "error", ve)
 
 				if !opt.Summary {
-					vi := au.Green(strconv.Itoa(ve.Index + 1))
-					vp := au.Green(strconv.Itoa(ve.Position + 1))
+					vi := au.Green(strconv.Itoa(ve.Index + 1)).Bold()
+					vp := au.Green(strconv.Itoa(ve.Position + 1)).Bold()
 					fmt.Fprintf(stdout, "%s:%s: %s\n", vi, vp, ve.Message)
 
 					l, err := errorAt(au, ve.Line, ve.Position)

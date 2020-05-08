@@ -123,14 +123,14 @@ func validate( // nolint: funlen,gocyclo
 					if lastChar != cr && lastChar != lf {
 						if *def.InsertFinalNewline {
 							err = ValidationError{
-								Message:  "missing the final newline",
+								Message:  "the final newline is missing",
 								Position: len(data),
 							}
 						}
 					} else {
 						if !*def.InsertFinalNewline {
 							err = ValidationError{
-								Message:  "found an extraneous final newline",
+								Message:  "an extraneous final newline was found",
 								Position: len(data),
 							}
 						}
