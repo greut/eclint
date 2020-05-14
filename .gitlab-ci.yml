@@ -50,6 +50,7 @@ nancy:
 
 sonarcloud check:
   stage: check
+  allow_failure: true
   image:
     name: sonarsource/sonar-scanner-cli:latest
     entrypoint: [""]

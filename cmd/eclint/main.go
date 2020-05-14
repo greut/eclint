@@ -26,7 +26,7 @@ const (
 	overridePrefix = "eclint_"
 )
 
-func main() { //nolint:funlen
+func main() { //nolint:funlen,gocyclo
 	flagVersion := false
 	color := "auto"
 	cpuprofile := ""
@@ -51,6 +51,7 @@ func main() { //nolint:funlen
 	flag.BoolVar(&flagVersion, "version", false, "print the version number")
 	flag.StringVar(&color, "color", color, `use color when printing; can be "always", "auto", or "never"`)
 	flag.BoolVar(&opt.Summary, "summary", opt.Summary, "enable the summary view")
+	flag.BoolVar(&opt.FixAllErrors, "fix", opt.FixAllErrors, "enable fixing instead of error reporting")
 	flag.BoolVar(
 		&opt.ShowAllErrors,
 		"show_all_errors",
@@ -169,11 +170,18 @@ outter:
 				break
 			}
 
-			errs := eclint.LintWithDefinition(def, filename, log)
-			c += len(errs)
+			if !opt.FixAllErrors {
+				errs := eclint.LintWithDefinition(def, filename, log)
+				c += len(errs)
 
-			if err := eclint.PrintErrors(opt, filename, errs); err != nil {
-				log.Error(err, "print errors failure")
+				if err := eclint.PrintErrors(opt, filename, errs); err != nil {
+					log.Error(err, "print errors failure")
+				}
+			} else {
+				err := eclint.FixWithDefinition(def, filename, log)
+				if err != nil {
+					log.Error(err, "fixing errors failure")
+				}
 			}
 		}
 	}

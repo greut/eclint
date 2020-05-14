@@ -14,6 +14,7 @@ type Option struct {
 	NoColors          bool
 	ShowAllErrors     bool
 	Summary           bool
+	FixAllErrors      bool
 	ShowErrorQuantity int
 	Exclude           string
 	Log               logr.Logger
