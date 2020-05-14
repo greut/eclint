@@ -49,12 +49,13 @@ $ eclint -exclude "testdata/**/*"
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
 - binary file detection (however quite basic)
+- `-fix` to modify the file in place rather than showing the errors (currently only basic `unix2dos`, `dox2unix` is supported)
 
 ## Missing features
 
 - `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
-- ability to fix
+- ability to fix: `insert_final_newline`, `indent_style`, `trim_trailing_whitespace`
 - etc.
 
 ## Benchmarks
@@ -68,10 +69,13 @@ The contenders are the following.
 
 The methodology is to run the linter against some big repositories `time eclint -show_all_errors`.
 
-| Repository | `editorconfig-checker` | `jedmao/eclint` | `greut/eclint` |
-|------------|------------------------|-----------------|----------|
-| [Roslyn](https://github.com/dotnet/roslyn) | 37s | 1m5s | **4s** |
-| [SaltStack](https://github.com/saltstack/salt) | 7s | 1m9s |  **<1s** |
+| Repository    | `editorconfig-checker` | `jedmao/eclint` | `greut/eclint` |
+|---------------|------------------------|-----------------|----------------|
+| [Roslyn][]    | 37s                    | 1m5s            | **4s**         |
+| [SaltStack][] | 7s                     | 1m9s            | **<1s**        |
+
+[Roslyn]: https://github.com/dotnet/roslyn
+[SaltStack]: https://github.com/saltstack/salt
 
 ### Profiling
 
