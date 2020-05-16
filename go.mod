@@ -9,6 +9,6 @@ require (
 	github.com/google/go-cmp v0.4.0
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/mattn/go-colorable v0.1.6
-	golang.org/x/crypto v0.0.0-20200429183012-4b2356b1ed79
+	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
 	k8s.io/klog/v2 v2.0.0
 )
