@@ -10,5 +10,7 @@ require (
 	github.com/logrusorgru/aurora v0.0.0-20200102142835-e9ef32dff381
 	github.com/mattn/go-colorable v0.1.6
 	golang.org/x/crypto v0.0.0-20200510223506-06a226fb4e37
+	golang.org/x/mod v0.3.0 // indirect
+	gopkg.in/ini.v1 v1.56.0 // indirect
 	k8s.io/klog/v2 v2.0.0
 )
