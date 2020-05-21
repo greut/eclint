@@ -88,10 +88,59 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 	return fix(r, fileSize, charset, log, def)
 }
 
-func fix(r io.Reader, fileSize int64, charset string, log logr.Logger, def *definition) (io.Reader, error) {
+func fix( // nolint: funlen
+	r io.Reader,
+	fileSize int64,
+	charset string,
+	log logr.Logger,
+	def *definition,
+) (io.Reader, error) {
 	buf := bytes.NewBuffer([]byte{})
 
+	var c []byte
+
+	var x []byte
+
+	size := def.IndentSize
+	if def.TabWidth != 0 {
+		size = def.TabWidth
+	}
+
+	switch def.IndentStyle {
+	case SpaceValue:
+		c = bytes.Repeat([]byte{space}, size)
+		x = []byte{tab}
+	case TabValue:
+		c = []byte{tab}
+		x = bytes.Repeat([]byte{space}, size)
+	case "", UnsetValue:
+		size = 0
+	default:
+		return nil, fmt.Errorf("%q is an invalid value of indent_style, want tab or space", def.IndentStyle)
+	}
+
 	errs := ReadLines(r, fileSize, func(index int, data []byte, isEOF bool) error {
+		if size != 0 {
+			i := 0
+			newData := make([]byte, 0, len(data))
+			for i < len(data) {
+				if bytes.HasPrefix(data[i:], c) {
+					i += len(c)
+					newData = append(newData, c...)
+					continue
+				}
+
+				if bytes.HasPrefix(data[i:], x) {
+					i += len(x)
+					newData = append(newData, c...)
+					continue
+				}
+
+				data = append(newData, data[i:]...)
+				break
+			}
+		}
+
 		if def.EndOfLine != "" && !isEOF {
 			data = bytes.TrimRight(data, "\r\n")
 

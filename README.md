@@ -49,13 +49,15 @@ $ eclint -exclude "testdata/**/*"
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
 - binary file detection (however quite basic)
-- `-fix` to modify the file in place rather than showing the errors (currently only basic `unix2dos`, `dox2unix` is supported)
+- `-fix` to modify the file in place rather than showing the errors currently:
+    - only basic `unix2dos`, `dox2unix`
+    - space to tab and tab to space convertion
 
 ## Missing features
 
 - `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
-- ability to fix: `insert_final_newline`, `indent_style`, `trim_trailing_whitespace`
+- ability to fix: `insert_final_newline`, `trim_trailing_whitespace`
 - etc.
 
 ## Benchmarks
