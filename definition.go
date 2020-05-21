@@ -28,6 +28,10 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) {
 		TabWidth:   d.TabWidth,
 	}
 
+	if def.Charset == "utf-8-bom" {
+		def.Charset = "utf-8 bom"
+	}
+
 	if d.IndentSize != "" && d.IndentSize != UnsetValue {
 		is, err := strconv.Atoi(d.IndentSize)
 		if err != nil {
