@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestFixEndOfline(t *testing.T) { // nolint:funlen
+func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 	tests := []struct {
 		Name  string
 		Lines [][]byte
@@ -82,7 +82,7 @@ func TestFixEndOfline(t *testing.T) { // nolint:funlen
 			r := bytes.NewReader(file)
 			out, err := fix(r, fileSize, "utf-8", l, def)
 			if err != nil {
-				t.Errorf("no errors where expected, got %s", err)
+				t.Fatalf("no errors where expected, got %s", err)
 			}
 
 			result, err := ioutil.ReadAll(out)
@@ -92,6 +92,73 @@ func TestFixEndOfline(t *testing.T) { // nolint:funlen
 
 			if cmp.Equal(file, result) {
 				t.Errorf("no differences, the file was not fixed")
+			}
+		})
+	}
+}
+
+func TestFixIndentStyle(t *testing.T) { // nolint:funlen
+	tests := []struct {
+		Name        string
+		IndentSize  string
+		IndentStyle string
+		File        []byte
+	}{
+		{
+			Name:        "space to tab",
+			IndentStyle: "tab",
+			IndentSize:  "2",
+			File:        []byte("\t\t  \tA line\n"),
+		},
+		{
+			Name:        "tab to space",
+			IndentStyle: "space",
+			IndentSize:  "2",
+			File:        []byte("\t\t  \tA line\n"),
+		},
+	}
+
+	l := tlogr.TestLogger{}
+
+	for _, tc := range tests {
+		tc := tc
+
+		fileSize := int64(len(tc.File))
+
+		// Test the nominal case
+		t.Run(tc.Name, func(t *testing.T) {
+			//t.Parallel()
+
+			def, err := newDefinition(&editorconfig.Definition{
+				EndOfLine:   "lf",
+				IndentStyle: tc.IndentStyle,
+				IndentSize:  tc.IndentSize,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+
+			if err := indentStyle(tc.IndentStyle, def.IndentSize, tc.File); err == nil {
+				t.Errorf("the initial file should fail")
+			}
+
+			r := bytes.NewReader(tc.File)
+			out, err := fix(r, fileSize, "utf-8", l, def)
+			if err != nil {
+				t.Fatalf("no errors where expected, got %s", err)
+			}
+
+			result, err := ioutil.ReadAll(out)
+			if err != nil {
+				t.Fatalf("cannot read result %s", err)
+			}
+
+			if cmp.Equal(tc.File, result) {
+				t.Errorf("no changes!?")
+			}
+
+			if err := indentStyle(tc.IndentStyle, def.IndentSize, result); err != nil {
+				t.Errorf("no errors were expected, got %s", err)
 			}
 		})
 	}
