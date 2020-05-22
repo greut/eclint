@@ -125,9 +125,8 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 
 		fileSize := int64(len(tc.File))
 
-		// Test the nominal case
 		t.Run(tc.Name, func(t *testing.T) {
-			//t.Parallel()
+			t.Parallel()
 
 			def, err := newDefinition(&editorconfig.Definition{
 				EndOfLine:   "lf",
@@ -159,6 +158,58 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 
 			if err := indentStyle(tc.IndentStyle, def.IndentSize, result); err != nil {
 				t.Errorf("no errors were expected, got %s", err)
+			}
+		})
+	}
+}
+
+func TestFixTrimTrailingWhitespace(t *testing.T) { // nolint:funlen
+	tests := []struct {
+		Name  string
+		Lines [][]byte
+	}{
+		{
+			Name: "space",
+			Lines: [][]byte{
+				[]byte("A file"),
+				[]byte(" with spaces "),
+				[]byte(" at the end  "),
+				[]byte(" "),
+			},
+		},
+		{
+			Name: "tabs",
+			Lines: [][]byte{
+				[]byte("A file"),
+				[]byte(" with tabs\t"),
+				[]byte(" at the end\t\t"),
+				[]byte("\t"),
+			},
+		},
+		{
+			Name: "tabs and spaces",
+			Lines: [][]byte{
+				[]byte("A file"),
+				[]byte(" with tabs\t\t "),
+				[]byte(" and spaces\t \t"),
+				[]byte(" at the end \t"),
+			},
+		},
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run(tc.Name, func(t *testing.T) {
+			t.Parallel()
+
+			for _, l := range tc.Lines {
+				m := fixTrailingWhitespace(l)
+
+				err := trimTrailingWhitespace(m)
+				if err != nil {
+					t.Errorf("no errors were expected. %s", err)
+				}
 			}
 		})
 	}
