@@ -119,41 +119,37 @@ func fix( // nolint: funlen
 		return nil, fmt.Errorf("%q is an invalid value of indent_style, want tab or space", def.IndentStyle)
 	}
 
+	var eol []byte
+
+	switch def.EndOfLine {
+	case "cr":
+		eol = []byte{'\r'}
+	case "crlf":
+		eol = []byte{'\r', '\n'}
+	case "lf":
+		eol = []byte{'\n'}
+	default:
+		return nil, fmt.Errorf("unsupported EndOfLine value %s", def.EndOfLine)
+	}
+
+	trimTrailingWhitespace := false
+	if def.TrimTrailingWhitespace != nil {
+		trimTrailingWhitespace = *def.TrimTrailingWhitespace
+	}
+
 	errs := ReadLines(r, fileSize, func(index int, data []byte, isEOF bool) error {
 		if size != 0 {
-			i := 0
-			newData := make([]byte, 0, len(data))
-			for i < len(data) {
-				if bytes.HasPrefix(data[i:], c) {
-					i += len(c)
-					newData = append(newData, c...)
-					continue
-				}
+			data = fixTabAndSpacePrefix(data, c, x)
+		}
 
-				if bytes.HasPrefix(data[i:], x) {
-					i += len(x)
-					newData = append(newData, c...)
-					continue
-				}
-
-				data = append(newData, data[i:]...)
-				break
-			}
+		if trimTrailingWhitespace {
+			data = fixTrailingWhitespace(data)
 		}
 
 		if def.EndOfLine != "" && !isEOF {
 			data = bytes.TrimRight(data, "\r\n")
 
-			switch def.EndOfLine {
-			case "cr":
-				data = append(data, '\r')
-			case "crlf":
-				data = append(data, '\r', '\n')
-			case "lf":
-				data = append(data, '\n')
-			default:
-				return fmt.Errorf("unsupported EndOfLine value %s", def.EndOfLine)
-			}
+			data = append(data, eol...)
 		}
 
 		_, err := buf.Write(data)
@@ -165,4 +161,63 @@ func fix( // nolint: funlen
 	}
 
 	return buf, nil
+}
+
+// fixTabAndSpacePrefix replaces any `x` by `c` in the given `data`
+func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) []byte {
+	newData := make([]byte, 0, len(data))
+
+	i := 0
+	for i < len(data) {
+		if bytes.HasPrefix(data[i:], c) {
+			i += len(c)
+
+			newData = append(newData, c...)
+
+			continue
+		}
+
+		if bytes.HasPrefix(data[i:], x) {
+			i += len(x)
+
+			newData = append(newData, c...)
+
+			continue
+		}
+
+		return append(newData, data[i:]...)
+	}
+
+	return data
+}
+
+// fixTrailingWhitespace replaces any whitespace or tab from the end of the line
+func fixTrailingWhitespace(data []byte) []byte {
+	i := len(data) - 1
+
+	// u -> v is the range to clean
+	u := len(data)
+
+	v := u
+
+outer:
+	for i >= 0 {
+		switch data[i] {
+		case '\r', '\n':
+			i--
+			u--
+			v--
+		case ' ', '\t':
+			i--
+			u--
+		default:
+			break outer
+		}
+	}
+
+	if u != v {
+		data = append(data[:u], data[v:]...)
+	}
+
+	return data
 }

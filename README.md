@@ -52,12 +52,13 @@ $ eclint -exclude "testdata/**/*"
 - `-fix` to modify the file in place rather than showing the errors currently:
     - only basic `unix2dos`, `dox2unix`
     - space to tab and tab to space convertion
+    - trailing whitespaces
 
 ## Missing features
 
 - `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
-- ability to fix: `insert_final_newline`, `trim_trailing_whitespace`
+- ability to fix: `insert_final_newline`, etc
 - etc.
 
 ## Benchmarks
