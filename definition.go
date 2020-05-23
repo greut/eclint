@@ -8,7 +8,7 @@ import (
 	"github.com/editorconfig/editorconfig-core-go/v2"
 )
 
-// definition contains the fields that aren't native to EditorConfig.Definition
+// definition contains the fields that aren't native to EditorConfig.Definition.
 type definition struct {
 	editorconfig.Definition
 	BlockCommentStart  []byte

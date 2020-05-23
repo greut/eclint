@@ -27,18 +27,9 @@ func ListFilesContext(ctx context.Context, log logr.Logger, args ...string) (<-c
 	return GitLsFilesContext(ctx, ".")
 }
 
-// ListFiles returns the list of files based on the input.
+// WalkContext iterates on each path item recursively (asynchronously).
 //
-// Deprecated: use ListFilesContext
-func ListFiles(log logr.Logger, args ...string) ([]string, error) {
-	filesChan, errChan := ListFilesContext(context.Background(), log, args...)
-
-	return ConsumeFilesContext(context.Background(), log, filesChan, errChan)
-}
-
-// WalkContext iterates on each path item recursively (asynchronously)
-//
-// Future work: use godirwalk
+// Future work: use godirwalk.
 func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan error) {
 	filesChan := make(chan string, 128)
 	errChan := make(chan error, 1)
@@ -71,23 +62,14 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 	return filesChan, errChan
 }
 
-// Walk iterates on each path item recursively.
-//
-// Deprecated: use WalkContext
-func Walk(log logr.Logger, paths ...string) ([]string, error) {
-	filesChan, errChan := WalkContext(context.Background(), paths...)
-
-	return ConsumeFilesContext(context.Background(), log, filesChan, errChan)
-}
-
-// AsyncGitLsFiles returns the list of file base on what is in the git index (asynchronously)
+// AsyncGitLsFiles returns the list of file base on what is in the git index (asynchronously).
 //
 // -z is mandatory as some repositories non-ASCII file names which creates
 // quoted and escaped file names. This method also returns directories for
 // any submodule there is. Submodule will be skipped afterwards and thus
 // not checked.
 //
-// Future work: use go-cmd for async call
+// Future work: use go-cmd for async call.
 func GitLsFilesContext(ctx context.Context, path string) (<-chan string, <-chan error) {
 	filesChan := make(chan string, 128)
 	errChan := make(chan error, 1)

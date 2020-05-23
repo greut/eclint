@@ -20,7 +20,7 @@ var (
 	utf32beBom = []byte{0, 0, 0xfe, 0xff} // nolint:gochecknoglobals
 )
 
-// ValidationError is a rich type containing information about the error
+// ValidationError is a rich type containing information about the error.
 type ValidationError struct {
 	Message  string
 	Filename string
@@ -38,7 +38,7 @@ func (e ValidationError) Error() string {
 	return fmt.Sprintf("%s:%d:%d: %s", e.Filename, e.Index+1, e.Position+1, e.Message)
 }
 
-// endOfLines checks the line ending
+// endOfLines checks the line ending.
 func endOfLine(eol string, data []byte) error {
 	switch eol {
 	case "lf":
@@ -69,7 +69,7 @@ func endOfLine(eol string, data []byte) error {
 	return nil
 }
 
-// indentStyle checks that the line beginnings are either space or tabs
+// indentStyle checks that the line beginnings are either space or tabs.
 func indentStyle(style string, size int, data []byte) error {
 	var c byte
 
@@ -122,8 +122,34 @@ func indentStyle(style string, size int, data []byte) error {
 	return nil
 }
 
-// trimTrailingWhitespace
-func trimTrailingWhitespace(data []byte) error {
+// checkInsertFinalNewline checks whenever the final line contains a newline or not.
+func checkInsertFinalNewline(data []byte, insertFinalNewline bool) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	lastChar := data[len(data)-1]
+	if lastChar != cr && lastChar != lf {
+		if insertFinalNewline {
+			return ValidationError{
+				Message:  "the final newline is missing",
+				Position: len(data),
+			}
+		}
+	} else {
+		if !insertFinalNewline {
+			return ValidationError{
+				Message:  "an extraneous final newline was found",
+				Position: len(data),
+			}
+		}
+	}
+
+	return nil
+}
+
+// checkTrimTrailingWhitespace lints any spaces before the final newline.
+func checkTrimTrailingWhitespace(data []byte) error {
 	for i := len(data) - 1; i >= 0; i-- {
 		if data[i] == cr || data[i] == lf {
 			continue
@@ -142,7 +168,7 @@ func trimTrailingWhitespace(data []byte) error {
 	return nil
 }
 
-// isBlockCommentStart tells you when a block comment started on this line
+// isBlockCommentStart tells you when a block comment started on this line.
 func isBlockCommentStart(start []byte, data []byte) bool {
 	for i := 0; i < len(data); i++ {
 		if data[i] == space || data[i] == tab {
@@ -155,7 +181,7 @@ func isBlockCommentStart(start []byte, data []byte) bool {
 	return false
 }
 
-// checkBlockComment checks the line is a valid block comment
+// checkBlockComment checks the line is a valid block comment.
 func checkBlockComment(i int, prefix []byte, data []byte) error {
 	for ; i < len(data); i++ {
 		if data[i] == space || data[i] == tab {
@@ -175,7 +201,7 @@ func checkBlockComment(i int, prefix []byte, data []byte) error {
 	return nil
 }
 
-// isBlockCommentEnd tells you when a block comment end on this line
+// isBlockCommentEnd tells you when a block comment end on this line.
 func isBlockCommentEnd(end []byte, data []byte) bool {
 	for i := len(data) - 1; i > 0; i-- {
 		if data[i] == cr || data[i] == lf {

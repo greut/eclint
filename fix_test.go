@@ -163,7 +163,7 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 	}
 }
 
-func TestFixTrimTrailingWhitespace(t *testing.T) { // nolint:funlen
+func TestFixTrimTrailingWhitespace(t *testing.T) {
 	tests := []struct {
 		Name  string
 		Lines [][]byte
@@ -206,7 +206,7 @@ func TestFixTrimTrailingWhitespace(t *testing.T) { // nolint:funlen
 			for _, l := range tc.Lines {
 				m := fixTrailingWhitespace(l)
 
-				err := trimTrailingWhitespace(m)
+				err := checkTrimTrailingWhitespace(m)
 				if err != nil {
 					t.Errorf("no errors were expected. %s", err)
 				}

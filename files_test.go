@@ -1,6 +1,7 @@
 package eclint_test
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"testing"
@@ -19,13 +20,27 @@ func TestListFiles(t *testing.T) {
 	l := tlogr.TestLogger{}
 	d := testdataSimple
 
-	fs, err := eclint.ListFiles(l, d)
-	if err != nil {
-		t.Fatal(err)
+	fs := 0
+	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l, d)
+
+outer:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				t.Fatal(err)
+			}
+
+		case _, ok := <-fsChan:
+			if !ok {
+				break outer
+			}
+			fs++
+		}
 	}
 
-	if len(fs) != 5 {
-		t.Errorf("%s should have two files, got %d", d, len(fs))
+	if fs != 5 {
+		t.Errorf("%s should have five files, got %d", d, fs)
 	}
 }
 
@@ -51,13 +66,25 @@ func TestListFilesNoArgs(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	fs, err := eclint.ListFiles(l)
-	if err != nil {
-		t.Fatal(err)
+	fs := 0
+	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l)
+outer:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				t.Fatal(err)
+			}
+		case _, ok := <-fsChan:
+			if !ok {
+				break outer
+			}
+			fs++
+		}
 	}
 
-	if len(fs) != 3 {
-		t.Errorf("%s should have two files, got %d", d, len(fs))
+	if fs != 3 {
+		t.Errorf("%s should have three files, got %d", d, fs)
 	}
 }
 
@@ -86,32 +113,59 @@ func TestListFilesNoGit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = eclint.ListFiles(l)
-	if err == nil {
+	_, errChan := eclint.ListFilesContext(context.TODO(), l)
+
+	err, ok := <-errChan
+	if !ok || err == nil {
 		t.Errorf("an error was expected, got nothing")
 	}
 
-	fs, err := eclint.ListFiles(l, ".")
-	if err != nil {
-		t.Fatal(err)
+	fs := 0
+	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l, ".")
+
+outer:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				t.Fatal(err)
+			}
+		case _, ok := <-fsChan:
+			if !ok {
+				break outer
+			}
+			fs++
+		}
 	}
 
-	if len(fs) != 1 {
-		t.Errorf("%s should have two files, got %d", d, len(fs))
+	if fs != 1 {
+		t.Errorf("%s should have one file, got %d", d, fs)
 	}
 }
 
 func TestWalk(t *testing.T) {
-	l := tlogr.TestLogger{}
 	d := testdataSimple
 
-	fs, err := eclint.Walk(l, d)
-	if err != nil {
-		t.Fatal(err)
+	fs := 0
+	fsChan, errChan := eclint.WalkContext(context.TODO(), d)
+
+outer:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				t.Fatal(err)
+			}
+		case _, ok := <-fsChan:
+			if !ok {
+				break outer
+			}
+			fs++
+		}
 	}
 
-	if len(fs) != 5 {
-		t.Errorf("%s should have two files, got %d", d, len(fs))
+	if fs != 5 {
+		t.Errorf("%s should have five files, got %d", d, fs)
 	}
 }
 

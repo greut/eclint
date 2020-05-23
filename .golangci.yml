@@ -6,6 +6,7 @@ linters-settings:
 
 linters:
   enable:
+    - bodyclose
     - deadcode
     - depguard
     - dogsled
@@ -17,10 +18,12 @@ linters:
     - goconst
     - gocritic
     - gocyclo
+    - godot
     - godox
     - goimports
     - golint
     - gosec
+    - govet
     - ineffassign
     - interfacer
     - lll
@@ -28,8 +31,10 @@ linters:
     - megacheck
     - misspell
     - nakedret
+    - nolintlint
     - prealloc
     - scopelint
+    - staticcheck
     - structcheck
     - unconvert
     - unused

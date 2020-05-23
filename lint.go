@@ -11,17 +11,17 @@ import (
 	"github.com/go-logr/logr"
 )
 
-// DefaultTabWidth sets the width of a tab used when counting the line length
+// DefaultTabWidth sets the width of a tab used when counting the line length.
 const DefaultTabWidth = 8
 
 const (
 	// UnsetValue is the value equivalent to an empty / unset one.
 	UnsetValue = "unset"
-	// TabValue is the value representing tab indentation (the ugly one)
+	// TabValue is the value representing tab indentation (the ugly one).
 	TabValue = "tab"
-	// SpaceValue is the value representing space indentation (the good one)
+	// SpaceValue is the value representing space indentation (the good one).
 	SpaceValue = "space"
-	// Utf8 is the ubiquitous character set
+	// Utf8 is the ubiquitous character set.
 	Utf8 = "utf-8"
 )
 
@@ -100,8 +100,8 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 	return errs
 }
 
-// validate is where the validations rules are applied
-func validate( // nolint: funlen,gocyclo
+// validate is where the validations rules are applied.
+func validate( // nolint: funlen
 	r io.Reader,
 	fileSize int64,
 	charset string,
@@ -113,29 +113,7 @@ func validate( // nolint: funlen,gocyclo
 
 		if isEOF {
 			if def.InsertFinalNewline != nil {
-				var lastChar byte
-
-				if len(data) > 0 {
-					lastChar = data[len(data)-1]
-				}
-
-				if lastChar != 0x0 {
-					if lastChar != cr && lastChar != lf {
-						if *def.InsertFinalNewline {
-							err = ValidationError{
-								Message:  "the final newline is missing",
-								Position: len(data),
-							}
-						}
-					} else {
-						if !*def.InsertFinalNewline {
-							err = ValidationError{
-								Message:  "an extraneous final newline was found",
-								Position: len(data),
-							}
-						}
-					}
-				}
+				err = checkInsertFinalNewline(data, *def.InsertFinalNewline)
 			}
 		} else {
 			if def.EndOfLine != "" && def.EndOfLine != UnsetValue {
@@ -162,7 +140,7 @@ func validate( // nolint: funlen,gocyclo
 		}
 
 		if err == nil && def.TrimTrailingWhitespace != nil && *def.TrimTrailingWhitespace {
-			err = trimTrailingWhitespace(data)
+			err = checkTrimTrailingWhitespace(data)
 		}
 
 		if err == nil && def.MaxLength > 0 {
