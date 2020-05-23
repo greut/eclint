@@ -161,7 +161,7 @@ func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 	return true, nil
 }
 
-// detectCharsetUsingBOM checks the charset via the first bytes of the first line
+// detectCharsetUsingBOM checks the charset via the first bytes of the first line.
 func detectCharsetUsingBOM(data []byte) string {
 	switch {
 	case bytes.HasPrefix(data, utf32leBom):
@@ -179,7 +179,7 @@ func detectCharsetUsingBOM(data []byte) string {
 	return ""
 }
 
-// detectCharset detects the file encoding
+// detectCharset detects the file encoding.
 func detectCharset(charset string, data []byte) (string, error) {
 	if charset == "" {
 		return charset, nil

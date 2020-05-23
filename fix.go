@@ -163,7 +163,7 @@ func fix( // nolint: funlen
 	return buf, nil
 }
 
-// fixTabAndSpacePrefix replaces any `x` by `c` in the given `data`
+// fixTabAndSpacePrefix replaces any `x` by `c` in the given `data`.
 func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) []byte {
 	newData := make([]byte, 0, len(data))
 
@@ -191,7 +191,7 @@ func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) []byte {
 	return data
 }
 
-// fixTrailingWhitespace replaces any whitespace or tab from the end of the line
+// fixTrailingWhitespace replaces any whitespace or tab from the end of the line.
 func fixTrailingWhitespace(data []byte) []byte {
 	i := len(data) - 1
 

@@ -129,7 +129,7 @@ func TestTrimTrailingWhitespace(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			err := trimTrailingWhitespace(tc.Line)
+			err := checkTrimTrailingWhitespace(tc.Line)
 			if err != nil {
 				t.Errorf("no errors were expected, got %s", err)
 			}
@@ -155,7 +155,7 @@ func TestTrimTrailingWhitespaceFailure(t *testing.T) {
 		tc := tc
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
-			err := trimTrailingWhitespace(tc.Line)
+			err := checkTrimTrailingWhitespace(tc.Line)
 			if err == nil {
 				t.Error("an error was expected")
 			}
