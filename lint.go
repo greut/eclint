@@ -101,7 +101,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 }
 
 // validate is where the validations rules are applied.
-func validate( // nolint: funlen,gocyclo
+func validate( // nolint: funlen
 	r io.Reader,
 	fileSize int64,
 	charset string,

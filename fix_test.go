@@ -163,7 +163,7 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 	}
 }
 
-func TestFixTrimTrailingWhitespace(t *testing.T) { // nolint:funlen
+func TestFixTrimTrailingWhitespace(t *testing.T) {
 	tests := []struct {
 		Name  string
 		Lines [][]byte
