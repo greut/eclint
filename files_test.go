@@ -172,23 +172,34 @@ outer:
 func TestGitLsFiles(t *testing.T) {
 	skipNoGit(t)
 
-	l := tlogr.TestLogger{}
 	d := testdataSimple
 
-	fs, err := eclint.GitLsFiles(l, d)
-	if err != nil {
-		t.Fatal(err)
+	fs := 0
+	fsChan, errChan := eclint.GitLsFilesContext(context.TODO(), d)
+
+outer:
+	for {
+		select {
+		case err, ok := <-errChan:
+			if ok && err != nil {
+				t.Fatal(err)
+			}
+		case _, ok := <-fsChan:
+			if !ok {
+				break outer
+			}
+			fs++
+		}
 	}
 
-	if len(fs) != 3 {
-		t.Errorf("%s should have two files, got %d", d, len(fs))
+	if fs != 3 {
+		t.Errorf("%s should have three files, got %d", d, fs)
 	}
 }
 
 func TestGitLsFilesFailure(t *testing.T) {
 	skipNoGit(t)
 
-	l := tlogr.TestLogger{}
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
 	err := os.MkdirAll(d, 0700)
@@ -196,8 +207,9 @@ func TestGitLsFilesFailure(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, err = eclint.GitLsFiles(l, d)
-	if err == nil {
+	_, errChan := eclint.GitLsFilesContext(context.TODO(), d)
+
+	if err := <-errChan; err == nil {
 		t.Error("an error was expected")
 	}
 }
