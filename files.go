@@ -4,11 +4,10 @@ import (
 	"bytes"
 	"context"
 	"fmt"
-	"os"
 	"os/exec"
-	"path/filepath"
 
 	"github.com/go-logr/logr"
+	"github.com/karrick/godirwalk"
 )
 
 // ListFilesContext lists the files in an asynchronous fashion
@@ -39,17 +38,16 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 		defer close(errChan)
 
 		for _, path := range paths {
-			err := filepath.Walk(path, func(filename string, _ os.FileInfo, e error) error {
-				if e != nil {
-					return e
-				}
-
-				select {
-				case filesChan <- filename:
-					return nil
-				case <-ctx.Done():
-					return ctx.Err()
-				}
+			err := godirwalk.Walk(path, &godirwalk.Options{
+				Callback: func(filename string, de *godirwalk.Dirent) error {
+					select {
+					case filesChan <- filename:
+						return nil
+					case <-ctx.Done():
+						return ctx.Err()
+					}
+				},
+				Unsorted: true,
 			})
 
 			if err != nil {
@@ -68,8 +66,6 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 // quoted and escaped file names. This method also returns directories for
 // any submodule there is. Submodule will be skipped afterwards and thus
 // not checked.
-//
-// Future work: use go-cmd for async call.
 func GitLsFilesContext(ctx context.Context, path string) (<-chan string, <-chan error) {
 	filesChan := make(chan string, 128)
 	errChan := make(chan error, 1)
