@@ -44,10 +44,15 @@ dockers:
   - "--label=org.opencontainers.image.revision={{.FullCommit}}"
   - "--label=org.opencontainers.image.source={{.GitURL}}"
   - "--label=org.opencontainers.image.version={{.Version}}"
+source:
+  enabled: true
 checksum:
   name_template: 'checksums.txt'
 signs:
-- artifacts: checksum
+- id: default
+  artifacts: checksum
+- id: source
+  artifacts: source
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
