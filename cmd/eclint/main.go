@@ -26,7 +26,7 @@ const (
 	overridePrefix = "eclint_"
 )
 
-func main() { //nolint:funlen,gocyclo
+func main() { // nolint: funlen
 	flagVersion := false
 	color := "auto"
 	cpuprofile := ""
@@ -35,7 +35,7 @@ func main() { //nolint:funlen,gocyclo
 
 	defer klog.Flush()
 
-	opt := eclint.Option{
+	opt := &eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
 		IsTerminal:        terminal.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
@@ -107,6 +107,7 @@ func main() { //nolint:funlen,gocyclo
 
 			return
 		}
+
 		defer f.Close()
 
 		if err := pprof.StartCPUProfile(f); err != nil {
@@ -114,76 +115,10 @@ func main() { //nolint:funlen,gocyclo
 		}
 	}
 
-	args := flag.Args()
-
-	config := &editorconfig.Config{
-		Parser: editorconfig.NewCachedParser(),
-	}
-
-	c := 0
-
-	fileChan, errChan := eclint.ListFilesContext(context.Background(), log, args...)
-outter:
-	for {
-		select {
-		case err, ok := <-errChan:
-			if ok {
-				log.Error(err, "cannot list files")
-				break outter
-			}
-
-		case filename, ok := <-fileChan:
-			if !ok {
-				break outter
-			}
-
-			log := opt.Log.WithValues("filename", filename)
-
-			// Skip excluded files
-			if opt.Exclude != "" {
-				ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
-				if err != nil {
-					log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
-					c++
-
-					break
-				}
-
-				if ok {
-					continue
-				}
-			}
-
-			def, err := config.Load(filename)
-			if err != nil {
-				log.Error(err, "cannot open file")
-				c++
-
-				break
-			}
-
-			err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
-			if err != nil {
-				log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
-				c++
-
-				break
-			}
-
-			if !opt.FixAllErrors {
-				errs := eclint.LintWithDefinition(def, filename, log)
-				c += len(errs)
-
-				if err := eclint.PrintErrors(opt, filename, errs); err != nil {
-					log.Error(err, "print errors failure")
-				}
-			} else {
-				err := eclint.FixWithDefinition(def, filename, log)
-				if err != nil {
-					log.Error(err, "fixing errors failure")
-				}
-			}
-		}
+	c, err := processArgs(context.Background(), opt, flag.Args())
+	if err != nil {
+		opt.Log.Error(err, "linting failure")
+		os.Exit(2)
 	}
 
 	if memprofile != "" {
@@ -205,7 +140,79 @@ outter:
 	}
 
 	if c > 0 {
-		opt.Log.V(1).Info("Some errors were found.", "count", c)
+		opt.Log.V(1).Info("some errors were found.", "count", c)
 		os.Exit(1)
+	}
+}
+
+func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { // nolint:funlen
+	c := 0
+
+	config := &editorconfig.Config{
+		Parser: editorconfig.NewCachedParser(),
+	}
+
+	fileChan, errChan := eclint.ListFilesContext(ctx, opt.Log, args...)
+
+	for {
+		select {
+		case <-ctx.Done():
+			return 0, ctx.Err()
+
+		case err, ok := <-errChan:
+			if ok {
+				opt.Log.Error(err, "cannot list files")
+				return 0, err
+			}
+
+		case filename, ok := <-fileChan:
+			if !ok {
+				return c, nil
+			}
+
+			log := opt.Log.WithValues("filename", filename)
+
+			// Skip excluded files
+			if opt.Exclude != "" {
+				ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
+				if err != nil {
+					log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
+					return 0, err
+				}
+
+				if ok {
+					continue
+				}
+			}
+
+			def, err := config.Load(filename)
+			if err != nil {
+				log.Error(err, "cannot open file")
+				return 0, err
+			}
+
+			err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
+			if err != nil {
+				log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
+				return 0, err
+			}
+
+			// Linting vs Fixing
+			if !opt.FixAllErrors {
+				errs := eclint.LintWithDefinition(def, filename, log)
+				c += len(errs)
+
+				if err := eclint.PrintErrors(opt, filename, errs); err != nil {
+					log.Error(err, "print errors failure")
+					return 0, err
+				}
+			} else {
+				err := eclint.FixWithDefinition(def, filename, log)
+				if err != nil {
+					log.Error(err, "fixing errors failure")
+					return 0, err
+				}
+			}
+		}
 	}
 }

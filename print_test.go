@@ -53,7 +53,7 @@ func TestPrintErrors(t *testing.T) {
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			buf := bytes.NewBuffer(make([]byte, 0, 1024))
-			opt := eclint.Option{
+			opt := &eclint.Option{
 				Log:    l,
 				Stdout: buf,
 			}

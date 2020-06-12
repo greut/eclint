@@ -9,7 +9,7 @@ import (
 )
 
 // PrintErrors is the rich output of the program.
-func PrintErrors(opt Option, filename string, errors []error) error {
+func PrintErrors(opt *Option, filename string, errors []error) error {
 	counter := 0
 
 	log := opt.Log

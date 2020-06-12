@@ -64,6 +64,7 @@ sonarcloud check:
 
 go-mod-outdated:
   stage: check
+  allow_failure: true
   script:
     - go get -u github.com/psampaz/go-mod-outdated
     - go list -u -m -json all | $GOPATH/bin/go-mod-outdated -update -direct -ci
