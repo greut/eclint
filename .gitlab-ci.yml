@@ -19,10 +19,12 @@ go test:
       -coverprofile coverage.out
       -json > test-report.json
     - go tool cover -func coverage.out
+    - go list -u -m -json all > go-list.json
   artifacts:
     paths:
       - coverage.out
       - test-report.json
+      - go-list.json
 
 eclint:
   stage: lint
@@ -45,8 +47,10 @@ golangci-lint:
 nancy:
   stage: check
   image: sonatypecommunity/nancy:${NANCY_VERSION}-alpine
+  needs:
+    - go test
   script:
-    - go list -u -m -json all | nancy --quiet
+    - cat go-list.json | nancy --quiet
 
 sonarcloud check:
   stage: check
@@ -65,12 +69,14 @@ sonarcloud check:
 go-mod-outdated:
   stage: check
   allow_failure: true
+  needs:
+    - go test
   script:
     - go get -u github.com/psampaz/go-mod-outdated
-    - go list -u -m -json all | $GOPATH/bin/go-mod-outdated -update -direct -ci
+    - cat go-list.json | $GOPATH/bin/go-mod-outdated -update -direct -ci
 
 goreleaser snapshot:
-  stage: snapshot
+  stage: check
   services:
     - docker:dind
   variables:
