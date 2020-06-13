@@ -46,7 +46,7 @@ nancy:
   stage: check
   image: sonatypecommunity/nancy:${NANCY_VERSION}-alpine
   script:
-    - nancy go.sum
+    - go list -u -m -json all | nancy --quiet
 
 sonarcloud check:
   stage: check
