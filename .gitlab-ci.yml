@@ -1,7 +1,7 @@
 image: golang:1.14-buster
 
 variables:
-  NANCY_VERSION: v0.2
+  NANCY_VERSION: v0.3
   GIT_DEPTH: "0"
 
 stages:
