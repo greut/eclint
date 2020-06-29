@@ -76,6 +76,20 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) {
 	return def, nil
 }
 
+// EOL returns the byte value of the given definition.
+func (def *definition) EOL() ([]byte, error) {
+	switch def.EndOfLine {
+	case "cr":
+		return []byte{cr}, nil
+	case "crlf":
+		return []byte{cr, lf}, nil
+	case "lf":
+		return []byte{lf}, nil
+	default:
+		return nil, fmt.Errorf("unsupported EndOfLine value %s", def.EndOfLine)
+	}
+}
+
 // OverrideDefinitionUsingPrefix is an helper that takes the prefixed values.
 //
 // It replaces thoses values into the nominal ones. That way a tool could a

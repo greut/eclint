@@ -88,23 +88,17 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 	return fix(r, fileSize, charset, log, def)
 }
 
-func fix( // nolint: funlen
-	r io.Reader,
-	fileSize int64,
-	charset string,
-	log logr.Logger,
-	def *definition,
-) (io.Reader, error) {
+func fix(r io.Reader, fileSize int64, charset string, log logr.Logger, def *definition) (io.Reader, error) {
 	buf := bytes.NewBuffer([]byte{})
-
-	var c []byte
-
-	var x []byte
 
 	size := def.IndentSize
 	if def.TabWidth != 0 {
 		size = def.TabWidth
 	}
+
+	var c []byte
+
+	var x []byte
 
 	switch def.IndentStyle {
 	case SpaceValue:
@@ -119,17 +113,9 @@ func fix( // nolint: funlen
 		return nil, fmt.Errorf("%q is an invalid value of indent_style, want tab or space", def.IndentStyle)
 	}
 
-	var eol []byte
-
-	switch def.EndOfLine {
-	case "cr":
-		eol = []byte{'\r'}
-	case "crlf":
-		eol = []byte{'\r', '\n'}
-	case "lf":
-		eol = []byte{'\n'}
-	default:
-		return nil, fmt.Errorf("unsupported EndOfLine value %s", def.EndOfLine)
+	eol, err := def.EOL()
+	if err != nil {
+		return nil, err
 	}
 
 	trimTrailingWhitespace := false
