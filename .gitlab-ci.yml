@@ -1,4 +1,4 @@
-image: golang:1.14-buster
+image: golang:1.15-buster
 
 variables:
   NANCY_VERSION: v0.3

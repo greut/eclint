@@ -1,8 +1,8 @@
 FROM alpine:3
 
-RUN apk --update add git && \
-    rm -rf /var/lib/apt/lists/* && \
-    rm /var/cache/apk/*
+# hadolint ignore=DL3018
+RUN apk --update --no-cache add \
+        git
 
 COPY eclint /usr/local/bin/
 
