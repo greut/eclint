@@ -2,6 +2,12 @@
 
 An faster alternative to the [JavaScript _eclint_](https://github.com/jedmao/eclint) written in Go.
 
+Tarballs are signed (`.minisig`) using the following public key:
+
+    RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE
+
+Which can be verified using [minisig](https://jedisct1.github.io/minisign/) or [signify](https://github.com/aperezdc/signify).
+
 ## Installation
 
 - [Archlinux](https://aur.archlinux.org/packages/eclint/)

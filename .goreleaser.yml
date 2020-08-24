@@ -17,7 +17,6 @@ builds:
   - CGO_ENABLED=0
 archives:
 - replacements:
-    386: i386
     amd64: x86_64
 dockers:
 - image_templates:
@@ -53,6 +52,20 @@ signs:
   artifacts: checksum
 - id: source
   artifacts: source
+- id: minisign default
+  artifacts: checksum
+  signature: "${artifact}.minisig"
+  cmd: sh
+  args:
+    - '-c'
+    - 'echo "" | minisign -x ${signature} -Sm ${artifact} -P RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE -t "{{ .ProjectName }} {{ .Tag }}"'
+- id: minisign source
+  artifacts: source
+  signature: "${artifact}.minisig"
+  cmd: sh
+  args:
+    - '-c'
+    - 'echo "" | minisign -x ${signature} -Sm ${artifact} -P RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE -t "{{ .ProjectName }} {{ .Tag }}"'
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
