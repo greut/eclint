@@ -11,7 +11,7 @@ Which can be verified using [minisig](https://jedisct1.github.io/minisign/) or [
 ## Installation
 
 - [Archlinux](https://aur.archlinux.org/packages/eclint/)
-- [Docker](https://hub.docker.com/r/greut/eclint)
+- [Docker](https://hub.docker.com/r/greut/eclint) ([Quay.io](https://quay.io/repository/greut/eclint))
 - [GitHub action](https://github.com/greut/eclint-action/)
 - [Manual installs](https://gitlab.com/greut/eclint/-/releases)
 
@@ -50,7 +50,7 @@ $ eclint -exclude "testdata/**/*"
 - when not path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
-- [Docker images](https://hub.docker.com/r/greut/eclint) (also on GitHub and GitLab registries)
+- [Docker images](https://hub.docker.com/r/greut/eclint) (also on Quay.io, GitHub and GitLab registries)
 - colored output (use `-color`: `never` to disable and `always` to skip detection)
 - `-summary` mode showing only the number of errors per file
 - only the X first errors are shown (use `-show_all_errors` to disable)
