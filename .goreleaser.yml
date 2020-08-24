@@ -25,6 +25,10 @@ dockers:
   - greut/eclint:{{ .Tag }}
   - greut/eclint:v{{ .Major }}
   - greut/eclint:v{{ .Major }}.{{ .Minor }}
+  - quay.io/greut/eclint:latest
+  - quay.io/greut/eclint:{{ .Tag }}
+  - quay.io/greut/eclint:v{{ .Major }}
+  - quay.io/greut/eclint:v{{ .Major }}.{{ .Minor }}
   - registry.gitlab.com/greut/eclint:latest
   - registry.gitlab.com/greut/eclint:{{ .Tag }}
   - registry.gitlab.com/greut/eclint:v{{ .Major }}
