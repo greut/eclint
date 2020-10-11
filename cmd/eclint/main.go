@@ -9,18 +9,15 @@ import (
 	"runtime/pprof"
 	"syscall"
 
-	"golang.org/x/crypto/ssh/terminal"
-
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/mattn/go-colorable"
 	"gitlab.com/greut/eclint"
+	"golang.org/x/crypto/ssh/terminal"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 )
 
-var (
-	version = "dev"
-)
+var version = "dev"
 
 const (
 	overridePrefix = "eclint_"
@@ -32,6 +29,11 @@ func main() { // nolint: funlen
 	cpuprofile := ""
 	memprofile := ""
 	log := klogr.New()
+
+	// hack to ensure other deferrable are executed beforehand.
+	retcode := 0
+
+	defer func() { os.Exit(retcode) }()
 
 	defer klog.Flush()
 
@@ -71,6 +73,7 @@ func main() { // nolint: funlen
 
 	if flagVersion {
 		fmt.Fprintf(opt.Stdout, "eclint %s\n", version)
+
 		return
 	}
 
@@ -103,7 +106,8 @@ func main() { // nolint: funlen
 		f, err := os.Create(cpuprofile)
 		if err != nil {
 			log.Error(err, "could not create CPU profile", "cpuprofile", cpuprofile)
-			os.Exit(1)
+
+			retcode = 1
 
 			return
 		}
@@ -118,7 +122,10 @@ func main() { // nolint: funlen
 	c, err := processArgs(context.Background(), opt, flag.Args())
 	if err != nil {
 		opt.Log.Error(err, "linting failure")
-		os.Exit(2)
+
+		retcode = 2
+
+		return
 	}
 
 	if memprofile != "" {
@@ -141,7 +148,8 @@ func main() { // nolint: funlen
 
 	if c > 0 {
 		opt.Log.V(1).Info("some errors were found.", "count", c)
-		os.Exit(1)
+
+		retcode = 1
 	}
 }
 
@@ -162,6 +170,7 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 		case err, ok := <-errChan:
 			if ok {
 				opt.Log.Error(err, "cannot list files")
+
 				return 0, err
 			}
 
@@ -177,6 +186,7 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 				ok, err := editorconfig.FnmatchCase(opt.Exclude, filename)
 				if err != nil {
 					log.Error(err, "exclude pattern failure", "exclude", opt.Exclude)
+
 					return 0, err
 				}
 
@@ -188,12 +198,14 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 			def, err := config.Load(filename)
 			if err != nil {
 				log.Error(err, "cannot open file")
+
 				return 0, err
 			}
 
 			err = eclint.OverrideDefinitionUsingPrefix(def, overridePrefix)
 			if err != nil {
 				log.Error(err, "overriding the definition failed", "prefix", overridePrefix)
+
 				return 0, err
 			}
 
@@ -204,12 +216,14 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 
 				if err := eclint.PrintErrors(opt, filename, errs); err != nil {
 					log.Error(err, "print errors failure")
+
 					return 0, err
 				}
 			} else {
 				err := eclint.FixWithDefinition(def, filename, log)
 				if err != nil {
 					log.Error(err, "fixing errors failure")
+
 					return 0, err
 				}
 			}

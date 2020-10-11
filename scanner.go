@@ -24,6 +24,7 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 			return i, data[0:i], nil
 		} else if data[i] == lf {
 			i++
+
 			return i, data[0:i], nil
 		}
 		i++

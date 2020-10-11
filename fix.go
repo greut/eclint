@@ -25,6 +25,7 @@ func FixWithDefinition(d *editorconfig.Definition, filename string, log logr.Log
 
 	if stat.IsDir() {
 		log.V(2).Info("skipped directory")
+
 		return nil
 	}
 
@@ -70,6 +71,7 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 
 	if !ok {
 		log.V(2).Info("skipped unreadable or empty file")
+
 		return nil, nil
 	}
 
@@ -80,6 +82,7 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 
 	if isBinary {
 		log.V(2).Info("binary file detected and skipped")
+
 		return nil, nil
 	}
 
@@ -139,6 +142,7 @@ func fix(r io.Reader, fileSize int64, charset string, log logr.Logger, def *defi
 		}
 
 		_, err := buf.Write(data)
+
 		return err
 	})
 

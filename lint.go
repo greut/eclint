@@ -49,6 +49,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 	if stat.IsDir() {
 		log.V(2).Info("skipped directory")
+
 		return nil
 	}
 
@@ -70,6 +71,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 	if !ok {
 		log.V(2).Info("skipped unreadable or empty file")
+
 		return nil
 	}
 
@@ -80,6 +82,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 	if isBinary {
 		log.V(2).Info("binary file detected and skipped")
+
 		return nil
 	}
 
@@ -150,6 +153,7 @@ func validate( // nolint: funlen
 				for _, bom := range [][]byte{utf8Bom} {
 					if bytes.HasPrefix(data, bom) {
 						d = data[len(utf8Bom):]
+
 						break
 					}
 				}
@@ -161,6 +165,7 @@ func validate( // nolint: funlen
 		if ve, ok := err.(ValidationError); ok {
 			ve.Line = data
 			ve.Index = index
+
 			return ve
 		}
 

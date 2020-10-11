@@ -13,6 +13,7 @@ linters:
     - dupl
     - errcheck
     - funlen
+    - gci
     - gochecknoglobals
     - gochecknoinits
     - goconst
@@ -20,7 +21,7 @@ linters:
     - gocyclo
     - godot
     - godox
-    - goimports
+    - gofumpt
     - golint
     - gosec
     - govet
@@ -31,6 +32,7 @@ linters:
     - megacheck
     - misspell
     - nakedret
+    - nlreturn
     - nolintlint
     - prealloc
     - scopelint
@@ -40,5 +42,4 @@ linters:
     - unused
     - varcheck
     - whitespace
-    - wsl
   disable-all: true
