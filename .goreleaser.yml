@@ -59,17 +59,15 @@ signs:
 - id: minisign default
   artifacts: checksum
   signature: "${artifact}.minisig"
-  cmd: sh
-  args:
-    - '-c'
-    - 'echo "" | minisign -x ${signature} -Sm ${artifact} -P RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE -t "{{ .ProjectName }} {{ .Tag }}"'
+  cmd: minisign
+  stdin: "\n"
+  args: [-x, "${signature}", -Sm, "${artifact}", -P, "RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE", -t, "{{ .ProjectName }} {{ .Tag }}"]
 - id: minisign source
   artifacts: source
   signature: "${artifact}.minisig"
-  cmd: sh
-  args:
-    - '-c'
-    - 'echo "" | minisign -x ${signature} -Sm ${artifact} -P RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE -t "{{ .ProjectName }} {{ .Tag }}"'
+  cmd: minisign
+  stdin: "\n"
+  args: [-x, "${signature}", -Sm, "${artifact}", -P, "RWRP3/Z4+t+iZk1QU6zufn6vSDlvd76FLWhGCkt5kE7YqW3mOtSh7FvE", -t, "{{ .ProjectName }} {{ .Tag }}"]
 snapshot:
   name_template: "{{ .Tag }}-next"
 changelog:
