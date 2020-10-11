@@ -8,7 +8,7 @@ import (
 	"gitlab.com/greut/eclint"
 )
 
-func TestReadLines(t *testing.T) {
+func TestReadLines(t *testing.T) { // nolint: funlen
 	tests := []struct {
 		Name     string
 		File     []byte
@@ -21,6 +21,7 @@ func TestReadLines(t *testing.T) {
 				if i != 0 || len(line) > 0 {
 					return fmt.Errorf("more than one line found (%d), or non epmty line %q", i, line)
 				}
+
 				return nil
 			},
 		}, {
@@ -30,6 +31,7 @@ func TestReadLines(t *testing.T) {
 				if i > 1 || len(line) > 2 {
 					return fmt.Errorf("more than two lines found (%d), or non empty line %q", i, line)
 				}
+
 				return nil
 			},
 		}, {
@@ -39,6 +41,7 @@ func TestReadLines(t *testing.T) {
 				if i > 1 || len(line) > 2 {
 					return fmt.Errorf("more than two lines found (%d), or non empty line %q", i, line)
 				}
+
 				return nil
 			},
 		}, {
@@ -48,6 +51,7 @@ func TestReadLines(t *testing.T) {
 				if i > 1 || len(line) > 2 {
 					return fmt.Errorf("more than two lines found (%d), or non empty line %q", i, line)
 				}
+
 				return nil
 			},
 		},
@@ -63,6 +67,7 @@ func TestReadLines(t *testing.T) {
 			errs := eclint.ReadLines(r, -1, tc.LineFunc)
 			if len(errs) > 0 {
 				t.Errorf("no errors were expected, got some. %s", errs[0])
+
 				return
 			}
 		})

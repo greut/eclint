@@ -42,6 +42,7 @@ func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (str
 func probeMagic(bs []byte, log logr.Logger) bool {
 	if bytes.HasPrefix(bs, []byte("%PDF-")) {
 		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
+
 		return true
 	}
 

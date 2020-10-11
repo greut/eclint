@@ -49,9 +49,9 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 				},
 				Unsorted: true,
 			})
-
 			if err != nil {
 				errChan <- err
+
 				break
 			}
 		}
