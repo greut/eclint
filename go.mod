@@ -11,5 +11,5 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.8
 	golang.org/x/crypto v0.0.0-20201016220609-9e8e0b390897
-	k8s.io/klog/v2 v2.3.0
+	k8s.io/klog/v2 v2.4.0
 )
