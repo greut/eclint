@@ -12,7 +12,7 @@ import (
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/mattn/go-colorable"
 	"gitlab.com/greut/eclint"
-	"golang.org/x/crypto/ssh/terminal"
+	"golang.org/x/term"
 	"k8s.io/klog/v2"
 	"k8s.io/klog/v2/klogr"
 )
@@ -40,7 +40,7 @@ func main() { // nolint: funlen
 	opt := &eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
-		IsTerminal:        terminal.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
+		IsTerminal:        term.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
 		Log:               log,
 	}
 
