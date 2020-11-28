@@ -10,6 +10,7 @@ import (
 	"syscall"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
+	"github.com/go-logr/logr"
 	"github.com/mattn/go-colorable"
 	"gitlab.com/greut/eclint"
 	"golang.org/x/term"
@@ -28,20 +29,19 @@ func main() { // nolint: funlen
 	color := "auto"
 	cpuprofile := ""
 	memprofile := ""
-	log := klogr.New()
 
 	// hack to ensure other deferrable are executed beforehand.
 	retcode := 0
 
 	defer func() { os.Exit(retcode) }()
 
+	log := klogr.New()
 	defer klog.Flush()
 
 	opt := &eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
 		IsTerminal:        term.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
-		Log:               log,
 	}
 
 	if runtime.GOOS == "windows" {
@@ -119,9 +119,10 @@ func main() { // nolint: funlen
 		}
 	}
 
-	c, err := processArgs(context.Background(), opt, flag.Args())
+	ctx := logr.NewContext(context.Background(), log)
+	c, err := processArgs(ctx, opt, flag.Args())
 	if err != nil {
-		opt.Log.Error(err, "linting failure")
+		log.Error(err, "linting failure")
 
 		retcode = 2
 
@@ -147,20 +148,21 @@ func main() { // nolint: funlen
 	}
 
 	if c > 0 {
-		opt.Log.V(1).Info("some errors were found.", "count", c)
+		log.V(1).Info("some errors were found.", "count", c)
 
 		retcode = 1
 	}
 }
 
 func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { // nolint:funlen
+	log := logr.FromContextOrDiscard(ctx)
 	c := 0
 
 	config := &editorconfig.Config{
 		Parser: editorconfig.NewCachedParser(),
 	}
 
-	fileChan, errChan := eclint.ListFilesContext(ctx, opt.Log, args...)
+	fileChan, errChan := eclint.ListFilesContext(ctx, args...)
 
 	for {
 		select {
@@ -169,7 +171,7 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 
 		case err, ok := <-errChan:
 			if ok {
-				opt.Log.Error(err, "cannot list files")
+				log.Error(err, "cannot list files")
 
 				return 0, err
 			}
@@ -179,7 +181,7 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 				return c, nil
 			}
 
-			log := opt.Log.WithValues("filename", filename)
+			log := log.WithValues("filename", filename)
 
 			// Skip excluded files
 			if opt.Exclude != "" {
@@ -211,16 +213,16 @@ func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, e
 
 			// Linting vs Fixing
 			if !opt.FixAllErrors {
-				errs := eclint.LintWithDefinition(def, filename, log)
+				errs := eclint.LintWithDefinition(ctx, def, filename)
 				c += len(errs)
 
-				if err := eclint.PrintErrors(opt, filename, errs); err != nil {
+				if err := eclint.PrintErrors(ctx, opt, filename, errs); err != nil {
 					log.Error(err, "print errors failure")
 
 					return 0, err
 				}
 			} else {
-				err := eclint.FixWithDefinition(def, filename, log)
+				err := eclint.FixWithDefinition(ctx, def, filename)
 				if err != nil {
 					log.Error(err, "fixing errors failure")
 

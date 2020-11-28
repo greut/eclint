@@ -2,10 +2,10 @@ package eclint
 
 import (
 	"bytes"
+	"context"
 	"testing"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
-	tlogr "github.com/go-logr/logr/testing"
 )
 
 func TestInsertFinalNewline(t *testing.T) { // nolint:funlen
@@ -32,7 +32,7 @@ without a final newline.`),
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -49,7 +49,7 @@ without a final newline.`),
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, -1, "utf-8", l, def) {
+			for _, err := range validate(ctx, r, -1, "utf-8", def) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}
@@ -70,7 +70,7 @@ without a final newline.`),
 
 			r := bytes.NewReader(tc.File)
 
-			for _, err := range validate(r, -1, "utf-8", l, def) {
+			for _, err := range validate(ctx, r, -1, "utf-8", def) {
 				if err == nil {
 					t.Error("an error was expected")
 				}
@@ -101,7 +101,7 @@ func TestBlockComment(t *testing.T) {
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -125,7 +125,7 @@ func TestBlockComment(t *testing.T) {
 			}
 
 			r := bytes.NewReader(tc.File)
-			for _, err := range validate(r, -1, "utf-8", l, d) {
+			for _, err := range validate(ctx, r, -1, "utf-8", d) {
 				if err != nil {
 					t.Errorf("no errors where expected, got %s", err)
 				}

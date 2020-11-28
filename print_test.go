@@ -2,10 +2,10 @@ package eclint_test
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"testing"
 
-	tlogr "github.com/go-logr/logr/testing"
 	"gitlab.com/greut/eclint"
 )
 
@@ -44,7 +44,7 @@ func TestPrintErrors(t *testing.T) {
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -54,10 +54,9 @@ func TestPrintErrors(t *testing.T) {
 			t.Parallel()
 			buf := bytes.NewBuffer(make([]byte, 0, 1024))
 			opt := &eclint.Option{
-				Log:    l,
 				Stdout: buf,
 			}
-			err := eclint.PrintErrors(opt, tc.Name, tc.Errors)
+			err := eclint.PrintErrors(ctx, opt, tc.Name, tc.Errors)
 			if err != nil {
 				t.Error("no errors were expected")
 			}
