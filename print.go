@@ -2,17 +2,19 @@ package eclint
 
 import (
 	"bytes"
+	"context"
 	"fmt"
 	"strconv"
 
+	"github.com/go-logr/logr"
 	"github.com/logrusorgru/aurora"
 )
 
 // PrintErrors is the rich output of the program.
-func PrintErrors(opt *Option, filename string, errors []error) error {
+func PrintErrors(ctx context.Context, opt *Option, filename string, errors []error) error {
 	counter := 0
 
-	log := opt.Log
+	log := logr.FromContextOrDiscard(ctx)
 	stdout := opt.Stdout
 
 	au := aurora.NewAurora(opt.IsTerminal && !opt.NoColors)

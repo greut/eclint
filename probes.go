@@ -3,6 +3,7 @@ package eclint
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -14,23 +15,23 @@ import (
 
 // ProbeCharsetOrBinary does all the probes to detect the encoding
 // or whether it is a binary file.
-func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (string, bool, error) {
+func ProbeCharsetOrBinary(ctx context.Context, r *bufio.Reader, charset string) (string, bool, error) {
 	bs, err := r.Peek(512)
 	if err != nil && err != io.EOF {
 		return "", false, err
 	}
 
-	isBinary := probeMagic(bs, log)
+	isBinary := probeMagic(ctx, bs)
 
 	if !isBinary {
-		isBinary = probeBinary(bs)
+		isBinary = probeBinary(ctx, bs)
 	}
 
 	if isBinary {
 		return "", true, nil
 	}
 
-	cs, err := probeCharset(bs, charset, log)
+	cs, err := probeCharset(ctx, bs, charset)
 	if err != nil {
 		return "", false, err
 	}
@@ -39,7 +40,9 @@ func ProbeCharsetOrBinary(r *bufio.Reader, charset string, log logr.Logger) (str
 }
 
 // probeMagic searches for some text-baesd binary files such as PDF.
-func probeMagic(bs []byte, log logr.Logger) bool {
+func probeMagic(ctx context.Context, bs []byte) bool {
+	log := logr.FromContextOrDiscard(ctx)
+
 	if bytes.HasPrefix(bs, []byte("%PDF-")) {
 		log.V(2).Info("magic for PDF was found", "prefix", bs[0:7])
 
@@ -52,7 +55,7 @@ func probeMagic(bs []byte, log logr.Logger) bool {
 // probeBinary tells if the reader is likely to be binary
 //
 // checking for \0 is a weak strategy.
-func probeBinary(bs []byte) bool {
+func probeBinary(ctx context.Context, bs []byte) bool {
 	cont := 0
 
 	l := len(bs)
@@ -96,7 +99,9 @@ func probeBinary(bs []byte) bool {
 	return cont > 0
 }
 
-func probeCharset(bs []byte, charset string, log logr.Logger) (string, error) {
+func probeCharset(ctx context.Context, bs []byte, charset string) (string, error) {
+	log := logr.FromContextOrDiscard(ctx)
+
 	// empty files are valid text files
 	if len(bs) == 0 {
 		return charset, nil

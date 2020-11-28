@@ -3,6 +3,7 @@ package eclint
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -12,7 +13,7 @@ import (
 )
 
 // FixWithDefinition does the hard work of validating the given file.
-func FixWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) error {
+func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename string) error {
 	def, err := newDefinition(d)
 	if err != nil {
 		return err
@@ -23,6 +24,8 @@ func FixWithDefinition(d *editorconfig.Definition, filename string, log logr.Log
 		return fmt.Errorf("cannot stat %s. %w", filename, err)
 	}
 
+	log := logr.FromContextOrDiscard(ctx)
+
 	if stat.IsDir() {
 		log.V(2).Info("skipped directory")
 
@@ -32,7 +35,7 @@ func FixWithDefinition(d *editorconfig.Definition, filename string, log logr.Log
 	fileSize := stat.Size()
 	mode := stat.Mode()
 
-	r, err := fixWithFilename(def, filename, fileSize, log)
+	r, err := fixWithFilename(ctx, def, filename, fileSize)
 	if err != nil {
 		return err
 	}
@@ -54,7 +57,7 @@ func FixWithDefinition(d *editorconfig.Definition, filename string, log logr.Log
 	return err
 }
 
-func fixWithFilename(def *definition, filename string, fileSize int64, log logr.Logger) (io.Reader, error) {
+func fixWithFilename(ctx context.Context, def *definition, filename string, fileSize int64) (io.Reader, error) {
 	fp, err := os.Open(filename)
 	if err != nil {
 		return nil, fmt.Errorf("cannot open %s. %w", filename, err)
@@ -69,13 +72,15 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 		return nil, fmt.Errorf("cannot read %s. %w", filename, err)
 	}
 
+	log := logr.FromContextOrDiscard(ctx)
+
 	if !ok {
 		log.V(2).Info("skipped unreadable or empty file")
 
 		return nil, nil
 	}
 
-	charset, isBinary, err := ProbeCharsetOrBinary(r, def.Charset, log)
+	charset, isBinary, err := ProbeCharsetOrBinary(ctx, r, def.Charset)
 	if err != nil {
 		return nil, err
 	}
@@ -88,10 +93,10 @@ func fixWithFilename(def *definition, filename string, fileSize int64, log logr.
 
 	log.V(2).Info("charset probed", "charset", charset)
 
-	return fix(r, fileSize, charset, log, def)
+	return fix(ctx, r, fileSize, charset, def)
 }
 
-func fix(r io.Reader, fileSize int64, charset string, log logr.Logger, def *definition) (io.Reader, error) {
+func fix(ctx context.Context, r io.Reader, fileSize int64, charset string, def *definition) (io.Reader, error) {
 	buf := bytes.NewBuffer([]byte{})
 
 	size := def.IndentSize

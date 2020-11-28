@@ -3,11 +3,11 @@ package eclint_test
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/binary"
 	"testing"
 	"unicode/utf16"
 
-	tlogr "github.com/go-logr/logr/testing"
 	"gitlab.com/greut/eclint"
 )
 
@@ -68,7 +68,7 @@ func TestProbeCharsetOfBinary(t *testing.T) { // nolint: funlen
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -78,7 +78,7 @@ func TestProbeCharsetOfBinary(t *testing.T) { // nolint: funlen
 			r := bytes.NewReader(tc.File)
 			br := bufio.NewReader(r)
 
-			charset, ok, err := eclint.ProbeCharsetOrBinary(br, tc.Charset, l)
+			charset, ok, err := eclint.ProbeCharsetOrBinary(ctx, br, tc.Charset)
 			if err != nil {
 				t.Errorf("no errors were expected, got %s", err)
 			}
@@ -107,7 +107,7 @@ func TestProbeCharsetOfBinaryFailure(t *testing.T) {
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -117,7 +117,7 @@ func TestProbeCharsetOfBinaryFailure(t *testing.T) {
 			r := bytes.NewReader(tc.File)
 			br := bufio.NewReader(r)
 
-			charset, ok, err := eclint.ProbeCharsetOrBinary(br, tc.Charset, l)
+			charset, ok, err := eclint.ProbeCharsetOrBinary(ctx, br, tc.Charset)
 			if err == nil {
 				t.Errorf("an error was expected, got charset %s, %v", charset, ok)
 			}
@@ -146,7 +146,7 @@ func TestProbeCharsetOfBinaryForBinary(t *testing.T) {
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -156,7 +156,7 @@ func TestProbeCharsetOfBinaryForBinary(t *testing.T) {
 			r := bytes.NewReader(tc.File)
 			br := bufio.NewReader(r)
 
-			charset, ok, err := eclint.ProbeCharsetOrBinary(br, "", l)
+			charset, ok, err := eclint.ProbeCharsetOrBinary(ctx, br, "")
 			if err != nil {
 				t.Errorf("no errors were expected %s", err)
 			}

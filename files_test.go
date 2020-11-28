@@ -6,7 +6,6 @@ import (
 	"os"
 	"testing"
 
-	tlogr "github.com/go-logr/logr/testing"
 	"gitlab.com/greut/eclint"
 )
 
@@ -17,11 +16,10 @@ const (
 )
 
 func TestListFiles(t *testing.T) {
-	l := tlogr.TestLogger{}
 	d := testdataSimple
 
 	fs := 0
-	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l, d)
+	fsChan, errChan := eclint.ListFilesContext(context.TODO(), d)
 
 outer:
 	for {
@@ -47,7 +45,6 @@ outer:
 func TestListFilesNoArgs(t *testing.T) {
 	skipNoGit(t)
 
-	l := tlogr.TestLogger{}
 	d := testdataSimple
 
 	cwd, err := os.Getwd()
@@ -67,7 +64,7 @@ func TestListFilesNoArgs(t *testing.T) {
 	}
 
 	fs := 0
-	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l)
+	fsChan, errChan := eclint.ListFilesContext(context.TODO())
 outer:
 	for {
 		select {
@@ -89,7 +86,6 @@ outer:
 }
 
 func TestListFilesNoGit(t *testing.T) {
-	l := tlogr.NullLogger{}
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
 	err := os.MkdirAll(d, 0700)
@@ -113,7 +109,7 @@ func TestListFilesNoGit(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	_, errChan := eclint.ListFilesContext(context.TODO(), l)
+	_, errChan := eclint.ListFilesContext(context.TODO())
 
 	err, ok := <-errChan
 	if !ok || err == nil {
@@ -121,7 +117,7 @@ func TestListFilesNoGit(t *testing.T) {
 	}
 
 	fs := 0
-	fsChan, errChan := eclint.ListFilesContext(context.TODO(), l, ".")
+	fsChan, errChan := eclint.ListFilesContext(context.TODO(), ".")
 
 outer:
 	for {

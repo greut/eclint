@@ -18,12 +18,18 @@ import (
 // current working directory.
 //
 // When args are given, it recursively walks into them.
-func ListFilesContext(ctx context.Context, log logr.Logger, args ...string) (<-chan string, <-chan error) {
+func ListFilesContext(ctx context.Context, args ...string) (<-chan string, <-chan error) {
 	if len(args) > 0 {
 		return WalkContext(ctx, args...)
 	}
 
-	return GitLsFilesContext(ctx, ".")
+	dir := "."
+
+	log := logr.FromContextOrDiscard(ctx)
+
+	log.V(3).Info("fallback to `git ls-files`", "dir", dir)
+
+	return GitLsFilesContext(ctx, dir)
 }
 
 // WalkContext iterates on each path item recursively (asynchronously).
@@ -60,7 +66,7 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 	return filesChan, errChan
 }
 
-// AsyncGitLsFiles returns the list of file base on what is in the git index (asynchronously).
+// GitLsFilesContext returns the list of file base on what is in the git index (asynchronously).
 //
 // -z is mandatory as some repositories non-ASCII file names which creates
 // quoted and escaped file names. This method also returns directories for

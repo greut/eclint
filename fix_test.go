@@ -2,11 +2,11 @@ package eclint
 
 import (
 	"bytes"
+	"context"
 	"io/ioutil"
 	"testing"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
-	tlogr "github.com/go-logr/logr/testing"
 	"github.com/google/go-cmp/cmp"
 )
 
@@ -33,7 +33,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -53,7 +53,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 			}
 
 			r := bytes.NewReader(file)
-			out, err := fix(r, fileSize, "utf-8", l, def)
+			out, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
 			}
@@ -80,7 +80,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 			}
 
 			r := bytes.NewReader(file)
-			out, err := fix(r, fileSize, "utf-8", l, def)
+			out, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
 			}
@@ -118,7 +118,7 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 		},
 	}
 
-	l := tlogr.TestLogger{}
+	ctx := context.TODO()
 
 	for _, tc := range tests {
 		tc := tc
@@ -142,7 +142,7 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 			}
 
 			r := bytes.NewReader(tc.File)
-			out, err := fix(r, fileSize, "utf-8", l, def)
+			out, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
 			}

@@ -3,6 +3,7 @@ package eclint
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -26,17 +27,19 @@ const (
 )
 
 // Lint does the hard work of validating the given file.
-func Lint(filename string, log logr.Logger) []error {
+func Lint(ctx context.Context, filename string) []error {
 	def, err := editorconfig.GetDefinitionForFilename(filename)
 	if err != nil {
 		return []error{fmt.Errorf("cannot open file %s. %w", filename, err)}
 	}
 
-	return LintWithDefinition(def, filename, log)
+	return LintWithDefinition(ctx, def, filename)
 }
 
 // LintWithDefinition does the hard work of validating the given file.
-func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Logger) []error { // nolint: funlen
+func LintWithDefinition(ctx context.Context, d *editorconfig.Definition, filename string) []error { // nolint: funlen
+	log := logr.FromContextOrDiscard(ctx)
+
 	def, err := newDefinition(d)
 	if err != nil {
 		return []error{err}
@@ -75,7 +78,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 		return nil
 	}
 
-	charset, isBinary, err := ProbeCharsetOrBinary(r, def.Charset, log)
+	charset, isBinary, err := ProbeCharsetOrBinary(ctx, r, def.Charset)
 	if err != nil {
 		return []error{err}
 	}
@@ -88,7 +91,7 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 	log.V(2).Info("charset probed", "charset", charset)
 
-	errs := validate(r, fileSize, charset, log, def)
+	errs := validate(ctx, r, fileSize, charset, def)
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
@@ -105,14 +108,18 @@ func LintWithDefinition(d *editorconfig.Definition, filename string, log logr.Lo
 
 // validate is where the validations rules are applied.
 func validate( // nolint: funlen
+	ctx context.Context,
 	r io.Reader,
 	fileSize int64,
 	charset string,
-	log logr.Logger,
 	def *definition,
 ) []error {
 	return ReadLines(r, fileSize, func(index int, data []byte, isEOF bool) error {
 		var err error
+
+		if ctx.Err() != nil {
+			return ctx.Err()
+		}
 
 		if isEOF {
 			if def.InsertFinalNewline != nil {
