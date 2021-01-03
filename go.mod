@@ -10,6 +10,6 @@ require (
 	github.com/karrick/godirwalk v1.16.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.8
-	golang.org/x/term v0.0.0-20201117132131-f5c789dd3221
+	golang.org/x/term v0.0.0-20201210144234-2321bbc49cbf
 	k8s.io/klog/v2 v2.4.0
 )
