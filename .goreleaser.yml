@@ -38,7 +38,7 @@ dockers:
   - docker.pkg.github.com/greut/eclint/cmd:v{{ .Major }}.{{ .Minor }}
   goos: linux
   goarch: amd64
-  binaries:
+  ids:
   - eclint
   build_flag_templates:
   - "--pull"
