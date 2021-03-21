@@ -36,6 +36,7 @@ func main() { // nolint: funlen
 	defer func() { os.Exit(retcode) }()
 
 	log := klogr.New()
+
 	defer klog.Flush()
 
 	opt := &eclint.Option{
@@ -120,6 +121,7 @@ func main() { // nolint: funlen
 	}
 
 	ctx := logr.NewContext(context.Background(), log)
+
 	c, err := processArgs(ctx, opt, flag.Args())
 	if err != nil {
 		log.Error(err, "linting failure")
@@ -154,7 +156,7 @@ func main() { // nolint: funlen
 	}
 }
 
-func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { // nolint:funlen
+func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { // nolint:funlen,gocognit
 	log := logr.FromContextOrDiscard(ctx)
 	c := 0
 

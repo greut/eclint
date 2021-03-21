@@ -1,6 +1,7 @@
 package eclint
 
 import (
+	"errors"
 	"testing"
 )
 
@@ -85,7 +86,10 @@ func TestEndOfLineFailures(t *testing.T) { //nolint:funlen
 		t.Run(tc.Name, func(t *testing.T) {
 			t.Parallel()
 			err := endOfLine(tc.EndOfLine, tc.Line)
-			ve, ok := err.(ValidationError)
+
+			var ve ValidationError
+			ok := errors.As(err, &ve)
+
 			if tc.Position >= 0 {
 				if !ok {
 					t.Errorf("a ValidationError was expected, got %t", err)

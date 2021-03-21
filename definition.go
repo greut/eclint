@@ -1,12 +1,16 @@
 package eclint
 
 import (
+	"errors"
 	"fmt"
 	"strconv"
 	"strings"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 )
+
+// ErrNotImplemented represents a missing feature.
+var ErrNotImplemented = errors.New("not implemented yet, PRs are welcome")
 
 // definition contains the fields that aren't native to EditorConfig.Definition.
 type definition struct {
@@ -22,7 +26,7 @@ type definition struct {
 	InsideBlockComment bool
 }
 
-func newDefinition(d *editorconfig.Definition) (*definition, error) {
+func newDefinition(d *editorconfig.Definition) (*definition, error) { // nolint:cyclop,gocognit
 	def := &definition{
 		Definition: *d,
 		TabWidth:   d.TabWidth,
@@ -35,13 +39,13 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) {
 	if d.IndentSize != "" && d.IndentSize != UnsetValue {
 		is, err := strconv.Atoi(d.IndentSize)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("cannot convert indentsize %q to int: %w", d.IndentSize, err)
 		}
 
 		def.IndentSize = is
 	}
 
-	if def.IndentStyle != "" && def.IndentStyle != UnsetValue {
+	if def.IndentStyle != "" && def.IndentStyle != UnsetValue { // nolint:nestif
 		bs, ok := def.Raw["block_comment_start"]
 		if ok && bs != "" && bs != UnsetValue {
 			def.BlockCommentStart = []byte(bs)
@@ -53,7 +57,10 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) {
 
 			be, ok := def.Raw["block_comment_end"]
 			if !ok || be == "" || be == UnsetValue {
-				return nil, fmt.Errorf(".editorconfig: block_comment_end was expected, none were found")
+				return nil, fmt.Errorf(
+					"%w: .editorconfig: block_comment_end was expected, none were found",
+					ErrConfiguration,
+				)
 			}
 
 			def.BlockCommentEnd = []byte(be)
@@ -63,7 +70,11 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) {
 	if mll, ok := def.Raw["max_line_length"]; ok && mll != "off" && mll != UnsetValue {
 		ml, er := strconv.Atoi(mll)
 		if er != nil || ml < 0 {
-			return nil, fmt.Errorf(".editorconfig: max_line_length expected a non-negative number, got %q", mll)
+			return nil, fmt.Errorf(
+				"%w: .editorconfig: max_line_length expected a non-negative number, got %q",
+				ErrConfiguration,
+				mll,
+			)
 		}
 
 		def.MaxLength = ml
@@ -86,7 +97,7 @@ func (def *definition) EOL() ([]byte, error) {
 	case "lf":
 		return []byte{lf}, nil
 	default:
-		return nil, fmt.Errorf("unsupported EndOfLine value %s", def.EndOfLine)
+		return nil, fmt.Errorf("%w: unsupported EndOfLine value %s", ErrConfiguration, def.EndOfLine)
 	}
 }
 
@@ -117,9 +128,9 @@ func OverrideDefinitionUsingPrefix(def *editorconfig.Definition, prefix string) 
 
 				def.TabWidth = i
 			case "trim_trailing_whitespace":
-				return fmt.Errorf("%v cannot be overridden yet, PR welcome", nk)
+				return fmt.Errorf("%v cannot be overridden: %w", nk, ErrNotImplemented)
 			case "insert_final_newline":
-				return fmt.Errorf("%v cannot be overridden yet, PR welcome", nk)
+				return fmt.Errorf("%v cannot be overridden: %w", nk, ErrNotImplemented)
 			}
 		}
 	}

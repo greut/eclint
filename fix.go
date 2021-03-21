@@ -37,7 +37,7 @@ func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename
 
 	r, err := fixWithFilename(ctx, def, filename, fileSize)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot fix %s: %w", filename, err)
 	}
 
 	if r == nil {
@@ -47,14 +47,18 @@ func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename
 	// XXX keep mode as is.
 	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, mode)
 	if err != nil {
-		return err
+		return fmt.Errorf("cannot open %s using %s: %w", filename, mode, err)
 	}
 	defer fp.Close()
 
 	n, err := io.Copy(fp, r)
+	if err != nil {
+		return fmt.Errorf("error copying file: %w", err)
+	}
+
 	log.V(1).Info("bytes written", "total", n)
 
-	return err
+	return nil
 }
 
 func fixWithFilename(ctx context.Context, def *definition, filename string, fileSize int64) (io.Reader, error) {
@@ -96,7 +100,13 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 	return fix(ctx, r, fileSize, charset, def)
 }
 
-func fix(ctx context.Context, r io.Reader, fileSize int64, charset string, def *definition) (io.Reader, error) {
+func fix( // nolint:funlen
+	_ context.Context,
+	r io.Reader,
+	fileSize int64,
+	_ string,
+	def *definition,
+) (io.Reader, error) {
 	buf := bytes.NewBuffer([]byte{})
 
 	size := def.IndentSize
@@ -118,12 +128,16 @@ func fix(ctx context.Context, r io.Reader, fileSize int64, charset string, def *
 	case "", UnsetValue:
 		size = 0
 	default:
-		return nil, fmt.Errorf("%q is an invalid value of indent_style, want tab or space", def.IndentStyle)
+		return nil, fmt.Errorf(
+			"%w: %q is an invalid value of indent_style, want tab or space",
+			ErrConfiguration,
+			def.IndentStyle,
+		)
 	}
 
 	eol, err := def.EOL()
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("cannot get EOL: %w", err)
 	}
 
 	trimTrailingWhitespace := false
@@ -147,8 +161,11 @@ func fix(ctx context.Context, r io.Reader, fileSize int64, charset string, def *
 		}
 
 		_, err := buf.Write(data)
+		if err != nil {
+			return fmt.Errorf("error writing into buffer: %w", err)
+		}
 
-		return err
+		return nil
 	})
 
 	if len(errs) != 0 {
@@ -193,7 +210,7 @@ func fixTrailingWhitespace(data []byte) []byte {
 	// u -> v is the range to clean
 	u := len(data)
 
-	v := u
+	v := u // nolint: ifshort
 
 outer:
 	for i >= 0 {

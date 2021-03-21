@@ -51,7 +51,7 @@ func ReadLines(r io.Reader, fileSize int64, fn LineFunc) []error {
 	sc := bufio.NewScanner(r)
 	sc.Split(SplitLines)
 
-	var read int64 = 0
+	var read int64
 
 	i := 0
 

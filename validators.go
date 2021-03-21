@@ -2,6 +2,7 @@ package eclint
 
 import (
 	"bytes"
+	"errors"
 	"fmt"
 )
 
@@ -19,6 +20,9 @@ var (
 	utf32leBom = []byte{0xff, 0xfe, 0, 0} // nolint:gochecknoglobals
 	utf32beBom = []byte{0, 0, 0xfe, 0xff} // nolint:gochecknoglobals
 )
+
+// ErrConfiguration represents an error in the editorconfig value.
+var ErrConfiguration = errors.New("configuration error")
 
 // ValidationError is a rich type containing information about the error.
 type ValidationError struct {
@@ -63,7 +67,7 @@ func endOfLine(eol string, data []byte) error {
 			}
 		}
 	default:
-		return fmt.Errorf("%q is an invalid value for eol, want cr, crlf, or lf", eol)
+		return fmt.Errorf("%w: %q is an invalid value for eol, want cr, crlf, or lf", ErrConfiguration, eol)
 	}
 
 	return nil
@@ -86,7 +90,7 @@ func indentStyle(style string, size int, data []byte) error {
 	case UnsetValue:
 		return nil
 	default:
-		return fmt.Errorf("%q is an invalid value of indent_style, want tab or space", style)
+		return fmt.Errorf("%w: %q is an invalid value of indent_style, want tab or space", ErrConfiguration, style)
 	}
 
 	if size == 0 {
@@ -94,7 +98,7 @@ func indentStyle(style string, size int, data []byte) error {
 	}
 
 	if size < 0 {
-		return fmt.Errorf("%d is an invalid value of indent_size, want a number or unset", size)
+		return fmt.Errorf("%w: %d is an invalid value of indent_size, want a number or unset", ErrConfiguration, size)
 	}
 
 	for i := 0; i < len(data); i++ {

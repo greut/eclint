@@ -3,6 +3,7 @@ package eclint
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"strconv"
 
@@ -11,7 +12,7 @@ import (
 )
 
 // PrintErrors is the rich output of the program.
-func PrintErrors(ctx context.Context, opt *Option, filename string, errors []error) error {
+func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error) error { // nolint:gocognit
 	counter := 0
 
 	log := logr.FromContextOrDiscard(ctx)
@@ -19,13 +20,14 @@ func PrintErrors(ctx context.Context, opt *Option, filename string, errors []err
 
 	au := aurora.NewAurora(opt.IsTerminal && !opt.NoColors)
 
-	for _, err := range errors {
-		if err != nil {
+	for _, err := range errs {
+		if err != nil { // nolint:nestif
 			if counter == 0 && !opt.Summary {
 				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename).Bold())
 			}
 
-			if ve, ok := err.(ValidationError); ok {
+			var ve ValidationError
+			if ok := errors.As(err, &ve); ok {
 				log.V(4).Info("lint error", "error", ve)
 
 				if !opt.Summary {
@@ -49,11 +51,11 @@ func PrintErrors(ctx context.Context, opt *Option, filename string, errors []err
 
 			counter++
 
-			if opt.ShowErrorQuantity > 0 && counter >= opt.ShowErrorQuantity && len(errors) > counter {
+			if opt.ShowErrorQuantity > 0 && counter >= opt.ShowErrorQuantity && len(errs) > counter {
 				fmt.Fprintf(
 					stdout,
 					" ... skipping at most %s errors\n",
-					au.BrightRed(strconv.Itoa(len(errors)-counter)),
+					au.BrightRed(strconv.Itoa(len(errs)-counter)),
 				)
 
 				break
@@ -83,7 +85,7 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	for i := 0; i < position; i++ {
 		if line[i] != cr && line[i] != lf {
 			if err := b.WriteByte(line[i]); err != nil {
-				return "", err
+				return "", fmt.Errorf("error writing byte: %w", err)
 			}
 		}
 	}
@@ -103,17 +105,17 @@ func errorAt(au aurora.Aurora, line []byte, position int) (string, error) {
 	}
 
 	if _, err := b.WriteString(au.White(s).BgRed().String()); err != nil {
-		return "", err
+		return "", fmt.Errorf("error writing string: %w", err)
 	}
 
 	for i := position + 1; i < len(line); i++ {
 		if line[i] != cr && line[i] != lf {
 			if err := b.WriteByte(line[i]); err != nil {
-				return "", err
+				return "", fmt.Errorf("error writing byte: %w", err)
 			}
 
 			if (line[i] >> 6) == 0b10 {
-				position++
+				i++
 			}
 		}
 	}
