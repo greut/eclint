@@ -3,6 +3,7 @@ package eclint
 import (
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"os/exec"
 
@@ -82,11 +83,12 @@ func GitLsFilesContext(ctx context.Context, path string) (<-chan string, <-chan 
 
 		output, err := exec.CommandContext(ctx, "git", "ls-files", "-z", path).Output()
 		if err != nil {
-			if e, ok := err.(*exec.ExitError); ok {
+			var e *exec.ExitError
+			if ok := errors.As(err, &e); ok {
 				if e.ExitCode() == 128 {
-					err = fmt.Errorf("not a git repository")
+					err = fmt.Errorf("not a git repository: %w", e)
 				} else {
-					err = fmt.Errorf("git ls-files failed with %s", e.Stderr)
+					err = fmt.Errorf("git ls-files failed with %s: %w", e.Stderr, e)
 				}
 			}
 

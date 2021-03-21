@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -95,7 +96,8 @@ func LintWithDefinition(ctx context.Context, d *editorconfig.Definition, filenam
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
-		if ve, ok := err.(ValidationError); ok {
+		var ve ValidationError
+		if ok := errors.As(err, &ve); ok {
 			ve.Filename = filename
 			errs[i] = ve
 		} else if err != nil {
@@ -107,7 +109,7 @@ func LintWithDefinition(ctx context.Context, d *editorconfig.Definition, filenam
 }
 
 // validate is where the validations rules are applied.
-func validate( // nolint: funlen
+func validate( // nolint: cyclop,gocognit,funlen
 	ctx context.Context,
 	r io.Reader,
 	fileSize int64,
@@ -131,7 +133,10 @@ func validate( // nolint: funlen
 			}
 		}
 
-		if err == nil && def.IndentStyle != "" && def.IndentStyle != UnsetValue && def.Definition.IndentSize != UnsetValue {
+		if err == nil && // nolint:nestif
+			def.IndentStyle != "" &&
+			def.IndentStyle != UnsetValue &&
+			def.Definition.IndentSize != UnsetValue {
 			if def.InsideBlockComment && def.BlockCommentEnd != nil {
 				def.InsideBlockComment = !isBlockCommentEnd(def.BlockCommentEnd, data)
 			}
@@ -139,7 +144,8 @@ func validate( // nolint: funlen
 			err = indentStyle(def.IndentStyle, def.IndentSize, data)
 			if err != nil && def.InsideBlockComment && def.BlockComment != nil {
 				// The indentation may fail within a block comment.
-				if ve, ok := err.(ValidationError); ok {
+				var ve ValidationError
+				if ok := errors.As(err, &ve); ok {
 					err = checkBlockComment(ve.Position, def.BlockComment, data)
 				}
 			}
@@ -169,7 +175,8 @@ func validate( // nolint: funlen
 		}
 
 		// Enrich the error with the line number
-		if ve, ok := err.(ValidationError); ok {
+		var ve ValidationError
+		if ok := errors.As(err, &ve); ok {
 			ve.Line = data
 			ve.Index = index
 

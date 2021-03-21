@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -17,8 +18,8 @@ import (
 // or whether it is a binary file.
 func ProbeCharsetOrBinary(ctx context.Context, r *bufio.Reader, charset string) (string, bool, error) {
 	bs, err := r.Peek(512)
-	if err != nil && err != io.EOF {
-		return "", false, err
+	if err != nil && !errors.Is(err, io.EOF) {
+		return "", false, fmt.Errorf("cannot peek into reader: %w", err)
 	}
 
 	isBinary := probeMagic(ctx, bs)
@@ -33,7 +34,7 @@ func ProbeCharsetOrBinary(ctx context.Context, r *bufio.Reader, charset string) 
 
 	cs, err := probeCharset(ctx, bs, charset)
 	if err != nil {
-		return "", false, err
+		return "", false, fmt.Errorf("cannot probe charset: %w", err)
 	}
 
 	return cs, false, nil
@@ -55,7 +56,7 @@ func probeMagic(ctx context.Context, bs []byte) bool {
 // probeBinary tells if the reader is likely to be binary
 //
 // checking for \0 is a weak strategy.
-func probeBinary(ctx context.Context, bs []byte) bool {
+func probeBinary(_ context.Context, bs []byte) bool {
 	cont := 0
 
 	l := len(bs)
@@ -147,21 +148,21 @@ func probeCharset(ctx context.Context, bs []byte, charset string) (string, error
 func probeReadable(fp *os.File, r *bufio.Reader) (bool, error) {
 	// Sanity check that the file can be read.
 	_, err := r.Peek(1)
-	if err != nil && err != io.EOF {
-		if err == io.EOF {
+	if err != nil && !errors.Is(err, io.EOF) {
+		if !errors.Is(err, io.EOF) {
 			return false, nil
 		}
 
 		fi, err := fp.Stat()
 		if err != nil {
-			return false, err
+			return false, fmt.Errorf("cannot stat file: %w", err)
 		}
 
 		if fi.IsDir() {
 			return false, nil
 		}
 
-		return false, err
+		return false, nil
 	}
 
 	return true, nil
@@ -195,7 +196,7 @@ func detectCharset(charset string, data []byte) (string, error) {
 
 	results, err := d.DetectAll(data)
 	if err != nil {
-		return "", fmt.Errorf("charset detection failure %s", err)
+		return "", fmt.Errorf("charset detection failure: %w", err)
 	}
 
 	for i, result := range results {
@@ -221,5 +222,5 @@ func detectCharset(charset string, data []byte) (string, error) {
 		}
 	}
 
-	return "", fmt.Errorf("got the following charset(s) %q which are not supported", charset)
+	return "", fmt.Errorf("%w: got the following charset(s) %q which are not supported", ErrConfiguration, charset)
 }

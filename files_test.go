@@ -211,6 +211,8 @@ func TestGitLsFilesFailure(t *testing.T) {
 }
 
 func skipNoGit(t *testing.T) {
+	t.Helper()
+
 	if _, err := os.Stat(".git"); os.IsNotExist(err) {
 		t.Skip("skipping test requiring .git to be present")
 	}

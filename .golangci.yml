@@ -1,45 +1,37 @@
 linters-settings:
+  cyclop:
+    max-complexity: 15
+    package-average: 10
   golint:
     min-confidence: 0.3
   gocyclo:
     min-complexity: 30
 
 linters:
-  enable:
-    - bodyclose
-    - deadcode
-    - depguard
-    - dogsled
-    - dupl
-    - errcheck
-    - funlen
-    - gci
-    - gochecknoglobals
-    - gochecknoinits
-    - goconst
-    - gocritic
-    - gocyclo
-    - godot
-    - godox
-    - gofumpt
-    - golint
-    - gosec
-    - govet
-    - ineffassign
+  disable:
+    - exhaustivestruct
+    - gomnd
     - interfacer
-    - lll
     - maligned
-    - megacheck
-    - misspell
-    - nakedret
-    - nlreturn
-    - nolintlint
-    - prealloc
-    - scopelint
-    - staticcheck
-    - structcheck
-    - unconvert
+  presets:
+    - bugs
+    - complexity
+    - format
+    - performance
+    - style
     - unused
-    - varcheck
-    - whitespace
-  disable-all: true
+  fast: false
+
+issues:
+  exclude-rules:
+    - path: _test\.go
+      linters:
+        - goerr113
+        - ifshort
+        - paralleltest
+        - testpackage
+        - tparallel
+    - path: main.go
+      linters:
+        - cyclop
+        - wrapcheck

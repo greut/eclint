@@ -19,7 +19,7 @@ func TestReadLines(t *testing.T) { // nolint: funlen
 			File: []byte(""),
 			LineFunc: func(i int, line []byte, isEOF bool) error {
 				if i != 0 || len(line) > 0 {
-					return fmt.Errorf("more than one line found (%d), or non epmty line %q", i, line)
+					return fmt.Errorf("more than one line found (%d), or non empty line %q", i, line)
 				}
 
 				return nil
