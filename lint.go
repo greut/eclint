@@ -120,7 +120,7 @@ func validate( // nolint: cyclop,gocognit,funlen
 		var err error
 
 		if ctx.Err() != nil {
-			return ctx.Err()
+			return fmt.Errorf("read lines got interrupted: %w", ctx.Err())
 		}
 
 		if isEOF {

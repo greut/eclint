@@ -10,9 +10,11 @@ linters-settings:
 linters:
   disable:
     - exhaustivestruct
+    - golint
     - gomnd
     - interfacer
     - maligned
+    - scopelint
   presets:
     - bugs
     - complexity
