@@ -51,7 +51,7 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 					case filesChan <- filename:
 						return nil
 					case <-ctx.Done():
-						return ctx.Err()
+						return fmt.Errorf("walking dir got interrupted: %w", ctx.Err())
 					}
 				},
 				Unsorted: true,
