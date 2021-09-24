@@ -88,7 +88,7 @@ outer:
 func TestListFilesNoGit(t *testing.T) {
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
-	err := os.MkdirAll(d, 0700)
+	err := os.MkdirAll(d, 0o700)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -198,7 +198,7 @@ func TestGitLsFilesFailure(t *testing.T) {
 
 	d := fmt.Sprintf("/tmp/eclint/%d", os.Getpid())
 
-	err := os.MkdirAll(d, 0700)
+	err := os.MkdirAll(d, 0o700)
 	if err != nil {
 		t.Fatal(err)
 	}
