@@ -4,14 +4,14 @@ go 1.17
 
 require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.4.3
-	github.com/go-logr/logr v1.1.0
+	github.com/go-logr/logr v1.2.0
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/google/go-cmp v0.5.6
 	github.com/karrick/godirwalk v1.16.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.9
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
-	k8s.io/klog/v2 v2.20.0
+	k8s.io/klog/v2 v2.60.1
 )
 
 require (
