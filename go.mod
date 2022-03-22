@@ -4,7 +4,7 @@ go 1.17
 
 require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.4.4
-	github.com/go-logr/logr v1.2.0
+	github.com/go-logr/logr v1.2.3
 	github.com/gogs/chardet v0.0.0-20191104214054-4b6791f73a28
 	github.com/google/go-cmp v0.5.7
 	github.com/karrick/godirwalk v1.16.1
