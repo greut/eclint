@@ -9,14 +9,14 @@ require (
 	github.com/google/go-cmp v0.5.7
 	github.com/karrick/godirwalk v1.16.1
 	github.com/logrusorgru/aurora v2.0.3+incompatible
-	github.com/mattn/go-colorable v0.1.9
+	github.com/mattn/go-colorable v0.1.12
 	golang.org/x/term v0.0.0-20210916214954-140adaaadfaf
 	k8s.io/klog/v2 v2.60.1
 )
 
 require (
-	github.com/mattn/go-isatty v0.0.12 // indirect
+	github.com/mattn/go-isatty v0.0.14 // indirect
 	golang.org/x/mod v0.5.1 // indirect
-	golang.org/x/sys v0.0.0-20210615035016-665e8c7367d1 // indirect
+	golang.org/x/sys v0.0.0-20210927094055-39ccf1dd6fa6 // indirect
 	gopkg.in/ini.v1 v1.66.4 // indirect
 )
