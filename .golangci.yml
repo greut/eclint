@@ -8,21 +8,16 @@ linters-settings:
     min-complexity: 30
 
 linters:
+  enable-all: true
   disable:
     - exhaustivestruct
+    - exhaustruct
     - golint
     - gomnd
     - interfacer
     - maligned
     - scopelint
     - varnamelen
-  presets:
-    - bugs
-    - complexity
-    - format
-    - performance
-    - style
-    - unused
   fast: false
 
 issues:
