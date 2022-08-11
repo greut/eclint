@@ -13,21 +13,21 @@ import (
 
 func utf16le(s string) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})        // nolint: errcheck
-	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s))) // nolint: errcheck
+	binary.Write(buf, binary.LittleEndian, []uint16{0xfeff})        //nolint:errcheck
+	binary.Write(buf, binary.LittleEndian, utf16.Encode([]rune(s))) //nolint:errcheck
 
 	return buf.Bytes()
 }
 
 func utf16be(s string) []byte {
 	buf := new(bytes.Buffer)
-	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})        // nolint: errcheck
-	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s))) // nolint: errcheck
+	binary.Write(buf, binary.BigEndian, []uint16{0xfeff})        //nolint:errcheck
+	binary.Write(buf, binary.BigEndian, utf16.Encode([]rune(s))) //nolint:errcheck
 
 	return buf.Bytes()
 }
 
-func TestProbeCharsetOfBinary(t *testing.T) { // nolint: funlen
+func TestProbeCharsetOfBinary(t *testing.T) {
 	tests := []struct {
 		Name    string
 		Charset string

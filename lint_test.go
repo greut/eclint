@@ -8,7 +8,7 @@ import (
 	"github.com/editorconfig/editorconfig-core-go/v2"
 )
 
-func TestInsertFinalNewline(t *testing.T) { // nolint:funlen
+func TestInsertFinalNewline(t *testing.T) {
 	tests := []struct {
 		Name               string
 		InsertFinalNewline bool

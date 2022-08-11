@@ -12,7 +12,7 @@ import (
 )
 
 // PrintErrors is the rich output of the program.
-func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error) error { // nolint:gocognit
+func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error) error { //nolint:gocognit
 	counter := 0
 
 	log := logr.FromContextOrDiscard(ctx)
@@ -21,7 +21,7 @@ func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error
 	au := aurora.NewAurora(opt.IsTerminal && !opt.NoColors)
 
 	for _, err := range errs {
-		if err != nil { // nolint:nestif
+		if err != nil { //nolint:nestif
 			if counter == 0 && !opt.Summary {
 				fmt.Fprintf(stdout, "%s:\n", au.Magenta(filename).Bold())
 			}

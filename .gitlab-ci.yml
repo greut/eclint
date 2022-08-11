@@ -1,4 +1,4 @@
-image: golang:1.18-bullseye
+image: golang:1.19-bullseye
 
 variables:
   NANCY_VERSION: v1.0
@@ -72,7 +72,7 @@ go-mod-outdated:
   needs:
     - go test
   script:
-    - go get -u github.com/psampaz/go-mod-outdated
+    - go install github.com/psampaz/go-mod-outdated@latest
     - cat go-list.json | $GOPATH/bin/go-mod-outdated -update -direct -ci
 
 goreleaser snapshot:

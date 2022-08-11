@@ -37,7 +37,7 @@ func TestEndOfLine(t *testing.T) {
 	}
 }
 
-func TestEndOfLineFailures(t *testing.T) { //nolint:funlen
+func TestEndOfLineFailures(t *testing.T) {
 	tests := []struct {
 		Name      string
 		EndOfLine string
