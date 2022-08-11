@@ -14,6 +14,7 @@ linters:
     - exhaustruct
     - golint
     - gomnd
+    - ifshort
     - interfacer
     - maligned
     - scopelint
@@ -24,6 +25,7 @@ issues:
   exclude-rules:
     - path: _test\.go
       linters:
+        - funlen
         - goerr113
         - ifshort
         - paralleltest

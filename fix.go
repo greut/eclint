@@ -45,7 +45,7 @@ func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename
 	}
 
 	// XXX keep mode as is.
-	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, mode)
+	fp, err := os.OpenFile(filename, os.O_WRONLY|os.O_TRUNC, mode) //nolint:nosnakecase
 	if err != nil {
 		return fmt.Errorf("cannot open %s using %s: %w", filename, mode, err)
 	}
@@ -100,7 +100,7 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 	return fix(ctx, r, fileSize, charset, def)
 }
 
-func fix( // nolint:funlen
+func fix( //nolint:funlen
 	_ context.Context,
 	r io.Reader,
 	fileSize int64,
@@ -210,7 +210,7 @@ func fixTrailingWhitespace(data []byte) []byte {
 	// u -> v is the range to clean
 	u := len(data)
 
-	v := u // nolint: ifshort
+	v := u //nolint: ifshort
 
 outer:
 	for i >= 0 {

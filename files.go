@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"os"
 	"os/exec"
 
 	"github.com/go-logr/logr"
@@ -45,6 +46,13 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 		defer close(errChan)
 
 		for _, path := range paths {
+			// shortcircuit files
+			if fi, err := os.Stat(path); err == nil && !fi.IsDir() {
+				filesChan <- path
+
+				break
+			}
+
 			err := godirwalk.Walk(path, &godirwalk.Options{
 				Callback: func(filename string, de *godirwalk.Dirent) error {
 					select {

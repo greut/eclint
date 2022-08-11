@@ -26,7 +26,7 @@ type definition struct {
 	InsideBlockComment bool
 }
 
-func newDefinition(d *editorconfig.Definition) (*definition, error) { // nolint:cyclop,gocognit
+func newDefinition(d *editorconfig.Definition) (*definition, error) { //nolint:cyclop,gocognit
 	def := &definition{
 		Definition: *d,
 		TabWidth:   d.TabWidth,
@@ -45,7 +45,7 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) { // nolint:
 		def.IndentSize = is
 	}
 
-	if def.IndentStyle != "" && def.IndentStyle != UnsetValue { // nolint:nestif
+	if def.IndentStyle != "" && def.IndentStyle != UnsetValue { //nolint:nestif
 		bs, ok := def.Raw["block_comment_start"]
 		if ok && bs != "" && bs != UnsetValue {
 			def.BlockCommentStart = []byte(bs)

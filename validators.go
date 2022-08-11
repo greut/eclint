@@ -14,11 +14,11 @@ const (
 )
 
 var (
-	utf8Bom    = []byte{0xef, 0xbb, 0xbf} // nolint:gochecknoglobals
-	utf16leBom = []byte{0xff, 0xfe}       // nolint:gochecknoglobals
-	utf16beBom = []byte{0xfe, 0xff}       // nolint:gochecknoglobals
-	utf32leBom = []byte{0xff, 0xfe, 0, 0} // nolint:gochecknoglobals
-	utf32beBom = []byte{0, 0, 0xfe, 0xff} // nolint:gochecknoglobals
+	utf8Bom    = []byte{0xef, 0xbb, 0xbf} //nolint:gochecknoglobals
+	utf16leBom = []byte{0xff, 0xfe}       //nolint:gochecknoglobals
+	utf16beBom = []byte{0xfe, 0xff}       //nolint:gochecknoglobals
+	utf32leBom = []byte{0xff, 0xfe, 0, 0} //nolint:gochecknoglobals
+	utf32beBom = []byte{0, 0, 0xfe, 0xff} //nolint:gochecknoglobals
 )
 
 // ErrConfiguration represents an error in the editorconfig value.
@@ -212,7 +212,7 @@ func isBlockCommentEnd(end []byte, data []byte) bool {
 			continue
 		}
 
-		return bytes.HasSuffix(data[:i], end)
+		return bytes.HasSuffix(data[:i+1], end)
 	}
 
 	return false

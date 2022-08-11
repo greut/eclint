@@ -8,7 +8,7 @@ import (
 	"gitlab.com/greut/eclint"
 )
 
-func TestReadLines(t *testing.T) { // nolint: funlen
+func TestReadLines(t *testing.T) {
 	tests := []struct {
 		Name     string
 		File     []byte

@@ -3,14 +3,14 @@ package eclint
 import (
 	"bytes"
 	"context"
-	"io/ioutil"
+	"io"
 	"testing"
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestFixEndOfLine(t *testing.T) { // nolint:funlen
+func TestFixEndOfLine(t *testing.T) {
 	tests := []struct {
 		Name  string
 		Lines [][]byte
@@ -58,7 +58,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 				t.Fatalf("no errors where expected, got %s", err)
 			}
 
-			result, err := ioutil.ReadAll(out)
+			result, err := io.ReadAll(out)
 			if err != nil {
 				t.Fatalf("cannot read result %s", err)
 			}
@@ -85,7 +85,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 				t.Fatalf("no errors where expected, got %s", err)
 			}
 
-			result, err := ioutil.ReadAll(out)
+			result, err := io.ReadAll(out)
 			if err != nil {
 				t.Fatalf("cannot read result %s", err)
 			}
@@ -97,7 +97,7 @@ func TestFixEndOfLine(t *testing.T) { // nolint:funlen
 	}
 }
 
-func TestFixIndentStyle(t *testing.T) { // nolint:funlen
+func TestFixIndentStyle(t *testing.T) {
 	tests := []struct {
 		Name        string
 		IndentSize  string
@@ -147,7 +147,7 @@ func TestFixIndentStyle(t *testing.T) { // nolint:funlen
 				t.Fatalf("no errors where expected, got %s", err)
 			}
 
-			result, err := ioutil.ReadAll(out)
+			result, err := io.ReadAll(out)
 			if err != nil {
 				t.Fatalf("cannot read result %s", err)
 			}

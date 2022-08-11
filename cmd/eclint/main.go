@@ -24,7 +24,7 @@ const (
 	overridePrefix = "eclint_"
 )
 
-func main() { // nolint: funlen
+func main() { //nolint:funlen
 	flagVersion := false
 	color := "auto"
 	cpuprofile := ""
@@ -42,7 +42,7 @@ func main() { // nolint: funlen
 	opt := &eclint.Option{
 		Stdout:            os.Stdout,
 		ShowErrorQuantity: 10,
-		IsTerminal:        term.IsTerminal(int(syscall.Stdout)), //nolint: unconvert
+		IsTerminal:        term.IsTerminal(int(syscall.Stdout)), //nolint:unconvert
 	}
 
 	if runtime.GOOS == "windows" {
@@ -156,7 +156,7 @@ func main() { // nolint: funlen
 	}
 }
 
-func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { // nolint:funlen,gocognit
+func processArgs(ctx context.Context, opt *eclint.Option, args []string) (int, error) { //nolint:funlen,gocognit
 	log := logr.FromContextOrDiscard(ctx)
 	c := 0
 
