@@ -74,7 +74,7 @@ func TestBlockCommentInvalidSpec(t *testing.T) {
 func TestLintCharset(t *testing.T) {
 	ctx := context.TODO()
 
-	for _, f := range []string{"latin1", "utf8"} {
+	for _, f := range []string{"ascii", "ascii2", "iso-8859-1", "utf8"} {
 		for _, err := range eclint.Lint(ctx, fmt.Sprintf("./testdata/charset/%s.txt", f)) {
 			if err != nil {
 				t.Errorf("no errors where expected, got %s", err)

@@ -25,6 +25,8 @@ const (
 	SpaceValue = "space"
 	// Utf8 is the ubiquitous character set.
 	Utf8 = "utf-8"
+	// Latin1 is the legacy 7-bits character set.
+	Latin1 = "latin1"
 )
 
 // Lint does the hard work of validating the given file.
