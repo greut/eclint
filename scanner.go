@@ -17,6 +17,11 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 		if data[i] == cr {
 			i++
 
+			if i < len(data) && !atEOF {
+				// Request more data
+				return 0, nil, nil
+			}
+
 			if i < len(data) && data[i] == lf {
 				i++
 			}
@@ -31,6 +36,7 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 	}
 
 	if !atEOF {
+		// Request more data
 		return 0, nil, nil
 	}
 

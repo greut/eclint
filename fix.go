@@ -114,6 +114,11 @@ func fix( //nolint:funlen
 		size = def.TabWidth
 	}
 
+	if size == 0 {
+		// Indent size default == 2
+		size = 2
+	}
+
 	var c []byte
 
 	var x []byte

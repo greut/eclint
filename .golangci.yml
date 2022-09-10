@@ -10,6 +10,7 @@ linters-settings:
 linters:
   enable-all: true
   disable:
+    - deadcode
     - exhaustivestruct
     - exhaustruct
     - golint
@@ -17,7 +18,10 @@ linters:
     - ifshort
     - interfacer
     - maligned
+    - nosnakecase
     - scopelint
+    - structcheck
+    - varcheck
     - varnamelen
   fast: false
 
