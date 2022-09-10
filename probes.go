@@ -110,7 +110,7 @@ func probeCharset(ctx context.Context, bs []byte, charset string) (string, error
 
 	var cs string
 	// The first line may contain the BOM for detecting some encodings
-	if charset != Utf8 && charset != "latin1" {
+	if charset != Utf8 && charset != Latin1 {
 		cs = detectCharsetUsingBOM(bs)
 
 		if charset != "" && cs != charset {
@@ -122,7 +122,7 @@ func probeCharset(ctx context.Context, bs []byte, charset string) (string, error
 		log.V(3).Info("detect using BOM", "charset", charset)
 	}
 
-	if cs == "" {
+	if cs == "" && charset != "" {
 		c, err := detectCharset(charset, bs)
 		if err != nil {
 			return "", err
@@ -130,7 +130,8 @@ func probeCharset(ctx context.Context, bs []byte, charset string) (string, error
 
 		cs = c
 
-		if charset != "" && charset != cs {
+		// latin1 is a strict subset of utf-8
+		if charset != cs {
 			return "", ValidationError{
 				Message: fmt.Sprintf("detected charset %q does not match expected %q", cs, charset),
 			}
@@ -199,27 +200,23 @@ func detectCharset(charset string, data []byte) (string, error) {
 		return "", fmt.Errorf("charset detection failure: %w", err)
 	}
 
-	for i, result := range results {
+	hasLatin1 := false
+	hasUtf8 := false
+
+	for _, result := range results {
 		if strings.HasPrefix(result.Charset, "ISO-8859-") {
-			result.Charset = "ASCII"
+			hasLatin1 = true
+		} else if result.Charset == "UTF-8" {
+			hasUtf8 = true
 		}
+	}
 
-		switch result.Charset {
-		case "UTF-8":
-			return Utf8, nil
-		case "ASCII":
-			if charset == Utf8 {
-				return Utf8, nil
-			}
+	if hasUtf8 && charset == Utf8 {
+		return charset, nil
+	}
 
-			return "latin1", nil
-		default:
-			if i == 0 {
-				charset = result.Charset
-			} else {
-				charset = fmt.Sprintf("%s,%s", charset, result.Charset)
-			}
-		}
+	if hasLatin1 && charset == Latin1 {
+		return charset, nil
 	}
 
 	return "", fmt.Errorf("%w: got the following charset(s) %q which are not supported", ErrConfiguration, charset)

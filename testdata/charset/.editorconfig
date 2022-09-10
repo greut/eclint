@@ -3,5 +3,13 @@ root = true
 [utf8.*]
 charset=utf-8
 
-[latin1.*]
+[iso-8859-1.*]
+charset=latin1
+
+; ASCII might be seen as UTF-8 when strict subset
+; or latin when strict subset as well. Life is hard
+[ascii.*]
+charset=utf-8
+
+[ascii2.*]
 charset=latin1
