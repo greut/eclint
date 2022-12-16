@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
 	"github.com/gogs/chardet"
 )
@@ -17,6 +18,10 @@ import (
 // ProbeCharsetOrBinary does all the probes to detect the encoding
 // or whether it is a binary file.
 func ProbeCharsetOrBinary(ctx context.Context, r *bufio.Reader, charset string) (string, bool, error) {
+	if charset == editorconfig.UnsetValue {
+		return charset, false, nil
+	}
+
 	bs, err := r.Peek(512)
 	if err != nil && !errors.Is(err, io.EOF) {
 		return "", false, fmt.Errorf("cannot peek into reader: %w", err)
