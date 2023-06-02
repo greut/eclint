@@ -1,6 +1,6 @@
 # eclint - EditorConfig linter ★
 
-An faster alternative to the [JavaScript _eclint_](https://github.com/jedmao/eclint) written in Go.
+A faster alternative to the [JavaScript _eclint_](https://github.com/jedmao/eclint) written in Go.
 
 Tarballs are signed (`.minisig`) using the following public key:
 
@@ -47,15 +47,15 @@ $ eclint -exclude "testdata/**/*"
 
 ### More
 
-- when not path is given, it searches for files via `git ls-files`
+- when no path is given, it searches for files via `git ls-files`
 - `-exclude` to filter out some files
 - unset / alter properties via the `eclint_` prefix
 - [Docker images](https://hub.docker.com/r/greut/eclint) (also on Quay.io, GitHub and GitLab registries)
 - colored output (use `-color`: `never` to disable and `always` to skip detection)
 - `-summary` mode showing only the number of errors per file
-- only the X first errors are shown (use `-show_all_errors` to disable)
+- only the first X errors are shown (use `-show_all_errors` to disable)
 - binary file detection (however quite basic)
-- `-fix` to modify the file in place rather than showing the errors currently:
+- `-fix` to modify files in place rather than showing the errors currently:
     - only basic `unix2dos`, `dox2unix`
     - space to tab and tab to space conversion
     - trailing whitespaces
@@ -64,7 +64,7 @@ $ eclint -exclude "testdata/**/*"
 
 - `max_line_length` counting UTF-16 and UTF-32 characters
 - more tests
-- ability to fix: `insert_final_newline`, etc
+- ability to fix: `insert_final_newline` etc.
 - etc.
 
 ## Benchmarks
