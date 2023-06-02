@@ -43,7 +43,7 @@ $ eclint -exclude "testdata/**/*"
 - [domain-specific properties][dsl]
     - `line_comment`
     - `block_comment_start`, `block_comment`, `block_comment_end`
-- miminal magic bytes detection (currently for PDF)
+- minimal magic bytes detection (currently for PDF)
 
 ### More
 
@@ -57,7 +57,7 @@ $ eclint -exclude "testdata/**/*"
 - binary file detection (however quite basic)
 - `-fix` to modify the file in place rather than showing the errors currently:
     - only basic `unix2dos`, `dox2unix`
-    - space to tab and tab to space convertion
+    - space to tab and tab to space conversion
     - trailing whitespaces
 
 ## Missing features

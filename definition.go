@@ -103,7 +103,7 @@ func (def *definition) EOL() ([]byte, error) {
 
 // OverrideDefinitionUsingPrefix is an helper that takes the prefixed values.
 //
-// It replaces thoses values into the nominal ones. That way a tool could a
+// It replaces those values into the nominal ones. That way a tool could a
 // different set of definition than the real editor would.
 func OverrideDefinitionUsingPrefix(def *editorconfig.Definition, prefix string) error {
 	for k, v := range def.Raw {

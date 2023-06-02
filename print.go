@@ -37,7 +37,7 @@ func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error
 
 					l, err := errorAt(au, ve.Line, ve.Position)
 					if err != nil {
-						log.Error(err, "line formating failure", "error", ve)
+						log.Error(err, "line formatting failure", "error", ve)
 
 						return err
 					}

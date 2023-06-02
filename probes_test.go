@@ -135,13 +135,13 @@ func TestProbeCharsetOfBinaryForBinary(t *testing.T) {
 			Name: "euro but reversed",
 			File: []byte{0xac, 0x82, 0xe2},
 		}, {
-			Name: "euro but trucated",
+			Name: "euro but truncated",
 			File: []byte{0xe2, 0x82},
 		}, {
 			Name: "poop but middle only",
 			File: []byte{0x9f, 0x92, 0xa9},
 		}, {
-			Name: "poop emoji but trucated",
+			Name: "poop emoji but truncated",
 			File: []byte{0xf0, 0x9f, 0x92},
 		},
 	}
