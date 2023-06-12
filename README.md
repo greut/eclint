@@ -62,7 +62,7 @@ $ eclint -exclude "testdata/**/*"
 
 ## Missing features
 
-- `max_line_length` counting UTF-16 and UTF-32 characters
+- `max_line_length` counting UTF-32 characters
 - more tests
 - ability to fix: `insert_final_newline` etc.
 - etc.

@@ -11,6 +11,9 @@ import (
 
 	"github.com/editorconfig/editorconfig-core-go/v2"
 	"github.com/go-logr/logr"
+	"golang.org/x/text/encoding"
+	"golang.org/x/text/encoding/unicode"
+	"golang.org/x/text/transform"
 )
 
 // DefaultTabWidth sets the width of a tab used when counting the line length.
@@ -92,9 +95,21 @@ func LintWithDefinition(ctx context.Context, d *editorconfig.Definition, filenam
 		return nil
 	}
 
-	log.V(2).Info("charset probed", "charset", charset)
+	log.V(2).Info("charset probed", "filename", filename, "charset", charset)
 
-	errs := validate(ctx, r, fileSize, charset, def)
+	var decoder *encoding.Decoder
+
+	switch charset {
+	case "utf-16be":
+		decoder = unicode.UTF16(unicode.BigEndian, unicode.ExpectBOM).NewDecoder()
+	case "utf-16le":
+		decoder = unicode.UTF16(unicode.LittleEndian, unicode.ExpectBOM).NewDecoder()
+	default:
+		decoder = unicode.UTF8.NewDecoder()
+	}
+
+	t := transform.NewReader(r, unicode.BOMOverride(decoder))
+	errs := validate(ctx, t, fileSize, charset, def)
 
 	// Enrich the errors with the filename
 	for i, err := range errs {
