@@ -56,7 +56,7 @@ $ eclint -exclude "testdata/**/*"
 - only the X first errors are shown (use `-show_all_errors` to disable)
 - binary file detection (however quite basic)
 - `-fix` to modify the file in place rather than showing the errors currently:
-    - only basic `unix2dos`, `dox2unix`
+    - only basic `unix2dos`, `dos2unix`
     - space to tab and tab to space convertion
     - trailing whitespaces
 
