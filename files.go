@@ -15,7 +15,7 @@ import (
 // ListFilesContext lists the files in an asynchronous fashion
 //
 // When its empty, it relies on `git ls-files` first, which
-// whould fail if `git` is not present or the current working
+// would fail if `git` is not present or the current working
 // directory is not managed by it. In that case, it work the
 // current working directory.
 //
