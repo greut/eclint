@@ -11,6 +11,7 @@ require (
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.13
 	golang.org/x/term v0.8.0
+	golang.org/x/text v0.9.0
 	k8s.io/klog/v2 v2.100.1
 )
 

@@ -53,7 +53,7 @@ func endOfLine(eol string, data []byte) error {
 			}
 		}
 	case "crlf":
-		if !bytes.HasSuffix(data, []byte{cr, lf}) {
+		if !bytes.HasSuffix(data, []byte{cr, lf}) && !bytes.HasSuffix(data, []byte{0x00, cr, 0x00, lf}) {
 			return ValidationError{
 				Message:  "line does not end with crlf (`\\r\\n`)",
 				Position: len(data),
