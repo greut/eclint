@@ -67,6 +67,11 @@ $ eclint -exclude "testdata/**/*"
 - ability to fix: `insert_final_newline` etc.
 - etc.
 
+## Thanks for their contributions
+
+- [Viktor Szépe](https://github.com/szepeviktor)
+- [Takuya Fukuju](https://github.com/chalkygames123)
+
 ## Benchmarks
 
 **NB** benchmarks matter at feature parity (which is also hard to measure).
