@@ -5,11 +5,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 
 	"github.com/go-logr/logr"
-	"github.com/karrick/godirwalk"
 )
 
 // ListFilesContext lists the files in an asynchronous fashion
@@ -53,16 +53,17 @@ func WalkContext(ctx context.Context, paths ...string) (<-chan string, <-chan er
 				break
 			}
 
-			err := godirwalk.Walk(path, &godirwalk.Options{
-				Callback: func(filename string, de *godirwalk.Dirent) error {
-					select {
-					case filesChan <- filename:
-						return nil
-					case <-ctx.Done():
-						return fmt.Errorf("walking dir got interrupted: %w", ctx.Err())
-					}
-				},
-				Unsorted: true,
+			err := fs.WalkDir(os.DirFS(path), ".", func(filename string, _ fs.DirEntry, err error) error {
+				if err != nil {
+					return err
+				}
+
+				select {
+				case filesChan <- filename:
+					return nil
+				case <-ctx.Done():
+					return fmt.Errorf("walking dir got interrupted: %w", ctx.Err())
+				}
 			})
 			if err != nil {
 				errChan <- err
