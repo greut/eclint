@@ -104,6 +104,14 @@ func TestProbeCharsetOfBinaryFailure(t *testing.T) {
 			Name:    "utf-8 vs latin1",
 			Charset: "latin1",
 			File:    []byte{'h', 'i', ' ', 0xf0, 0x9f, 0x92, 0xa9, '!'},
+		}, {
+			Name:    "utf-8 vs utf-8 bom",
+			Charset: "utf-8 bom",
+			File:    []byte{'h', 'i', ' ', 0xf0, 0x9f, 0x92, 0xa9, '!'},
+		}, {
+			Name:    "utf-8 bom vs utf-8",
+			Charset: "utf-8",
+			File:    []byte{0xef, 0xbb, 0xbf, 'h', 'e', 'l', 'l', 'o', '.'},
 		},
 	}
 

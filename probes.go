@@ -45,7 +45,7 @@ func ProbeCharsetOrBinary(ctx context.Context, r *bufio.Reader, charset string) 
 	return cs, false, nil
 }
 
-// probeMagic searches for some text-baesd binary files such as PDF.
+// probeMagic searches for some text-based binary files such as PDF.
 func probeMagic(ctx context.Context, bs []byte) bool {
 	log := logr.FromContextOrDiscard(ctx)
 
@@ -115,16 +115,12 @@ func probeCharset(ctx context.Context, bs []byte, charset string) (string, error
 
 	var cs string
 	// The first line may contain the BOM for detecting some encodings
-	if charset != Utf8 && charset != Latin1 {
-		cs = detectCharsetUsingBOM(bs)
+	cs = detectCharsetUsingBOM(bs)
 
-		if charset != "" && cs != charset {
-			return "", ValidationError{
-				Message: fmt.Sprintf("no %s prefix were found, got %q", charset, cs),
-			}
+	if charset != "" && cs != "" && cs != charset {
+		return "", ValidationError{
+			Message: fmt.Sprintf("no %s prefix were found, got %q", charset, cs),
 		}
-
-		log.V(3).Info("detect using BOM", "charset", charset)
 	}
 
 	if cs == "" && charset != "" {

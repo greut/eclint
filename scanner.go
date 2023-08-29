@@ -50,7 +50,7 @@ func SplitLines(data []byte, atEOF bool) (int, []byte, error) {
 // ReadLines consumes the reader and emit each line via the LineFunc
 //
 // Line numbering starts at 0. Scanner is pretty smart an will reuse
-// its memory structure. This is somehing we explicitly avoid by copying
+// its memory structure. This is something we explicitly avoid by copying
 // the content to a new slice.
 func ReadLines(r io.Reader, fileSize int64, fn LineFunc) []error {
 	errs := make([]error, 0)
