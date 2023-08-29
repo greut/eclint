@@ -26,7 +26,7 @@ type definition struct {
 	InsideBlockComment bool
 }
 
-func newDefinition(d *editorconfig.Definition) (*definition, error) { //nolint:cyclop,gocognit
+func newDefinition(d *editorconfig.Definition) (*definition, error) { //nolint:cyclop
 	def := &definition{
 		Definition: *d,
 		TabWidth:   d.TabWidth,

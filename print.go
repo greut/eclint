@@ -12,7 +12,7 @@ import (
 )
 
 // PrintErrors is the rich output of the program.
-func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error) error { //nolint:gocognit
+func PrintErrors(ctx context.Context, opt *Option, filename string, errs []error) error {
 	counter := 0
 
 	log := logr.FromContextOrDiscard(ctx)
