@@ -1,4 +1,4 @@
-image: golang:1.19-bullseye
+image: golang:1.20-bookworm
 
 variables:
   NANCY_VERSION: v1.0
