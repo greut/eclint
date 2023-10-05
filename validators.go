@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"errors"
 	"fmt"
+
+	"github.com/editorconfig/editorconfig-core-go/v2"
 )
 
 const (
@@ -45,21 +47,21 @@ func (e ValidationError) Error() string {
 // endOfLines checks the line ending.
 func endOfLine(eol string, data []byte) error {
 	switch eol {
-	case "lf":
+	case editorconfig.EndOfLineLf:
 		if !bytes.HasSuffix(data, []byte{lf}) || bytes.HasSuffix(data, []byte{cr, lf}) {
 			return ValidationError{
 				Message:  "line does not end with lf (`\\n`)",
 				Position: len(data),
 			}
 		}
-	case "crlf":
+	case editorconfig.EndOfLineCrLf:
 		if !bytes.HasSuffix(data, []byte{cr, lf}) && !bytes.HasSuffix(data, []byte{0x00, cr, 0x00, lf}) {
 			return ValidationError{
 				Message:  "line does not end with crlf (`\\r\\n`)",
 				Position: len(data),
 			}
 		}
-	case "cr":
+	case editorconfig.EndOfLineCr:
 		if !bytes.HasSuffix(data, []byte{cr}) {
 			return ValidationError{
 				Message:  "line does not end with cr (`\\r`)",
