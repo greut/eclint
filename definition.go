@@ -90,11 +90,11 @@ func newDefinition(d *editorconfig.Definition) (*definition, error) { //nolint:c
 // EOL returns the byte value of the given definition.
 func (def *definition) EOL() ([]byte, error) {
 	switch def.EndOfLine {
-	case "cr":
+	case editorconfig.EndOfLineCr:
 		return []byte{cr}, nil
-	case "crlf":
+	case editorconfig.EndOfLineCrLf:
 		return []byte{cr, lf}, nil
-	case "lf":
+	case editorconfig.EndOfLineLf:
 		return []byte{lf}, nil
 	default:
 		return nil, fmt.Errorf("%w: unsupported EndOfLine value %s", ErrConfiguration, def.EndOfLine)

@@ -73,7 +73,7 @@ func TestFixEndOfLine(t *testing.T) {
 			t.Parallel()
 
 			def, err := newDefinition(&editorconfig.Definition{
-				EndOfLine: "crlf",
+				EndOfLine: editorconfig.EndOfLineCrLf,
 			})
 			if err != nil {
 				t.Fatal(err)
@@ -210,6 +210,109 @@ func TestFixTrimTrailingWhitespace(t *testing.T) {
 				if err != nil {
 					t.Errorf("no errors were expected. %s", err)
 				}
+			}
+		})
+	}
+}
+
+func TestFixInsertFinalNewline(t *testing.T) {
+	eolVariants := [][]byte{
+		{cr},
+		{lf},
+		{cr, lf},
+	}
+
+	insertFinalNewlineVariants := []bool{true, false}
+	newlinesAtEOLVariants := []int{0, 1, 3}
+
+	type Test struct {
+		InsertFinalNewline bool
+		File               []byte
+		EolVariant         []byte
+		NewlinesAtEOL      int
+	}
+
+	tests := make([]Test, 0, 54)
+
+	// single line tests
+	singleLineFile := []byte(`A single line file.`)
+
+	for _, eolVariant := range eolVariants {
+		for _, insertFinalNewlineVariant := range insertFinalNewlineVariants {
+			for newlinesAtEOL := range newlinesAtEOLVariants {
+				file := singleLineFile
+				for i := 0; i < newlinesAtEOL; i++ {
+					file = append(file, eolVariant...)
+				}
+
+				tests = append(tests,
+					Test{
+						InsertFinalNewline: insertFinalNewlineVariant,
+						File:               file,
+						EolVariant:         eolVariant,
+						NewlinesAtEOL:      newlinesAtEOL,
+					},
+				)
+			}
+		}
+	}
+
+	// multiline tests
+	multilineComponents := [][]byte{[]byte(`A`), []byte(`multiline`), []byte(`file.`)}
+
+	for _, eolVariant := range eolVariants {
+		multilineFile := bytes.Join(multilineComponents, eolVariant)
+
+		for _, insertFinalNewlineVariant := range insertFinalNewlineVariants {
+			for newlinesAtEOL := range newlinesAtEOLVariants {
+				file := multilineFile
+				for i := 0; i < newlinesAtEOL; i++ {
+					file = append(file, eolVariant...)
+				}
+
+				tests = append(tests,
+					Test{
+						InsertFinalNewline: insertFinalNewlineVariant,
+						File:               file,
+						EolVariant:         eolVariant,
+						NewlinesAtEOL:      newlinesAtEOL,
+					},
+				)
+			}
+		}
+	}
+
+	// empty file tests
+	emptyFile := []byte("")
+
+	for _, eolVariant := range eolVariants {
+		for _, insertFinalNewlineVariant := range insertFinalNewlineVariants {
+			tests = append(tests,
+				Test{
+					InsertFinalNewline: insertFinalNewlineVariant,
+					File:               emptyFile,
+					EolVariant:         eolVariant,
+				},
+			)
+		}
+	}
+
+	for _, tc := range tests {
+		tc := tc
+
+		t.Run("TestFixInsertFinalNewline", func(t *testing.T) {
+			t.Parallel()
+
+			buf := bytes.Buffer{}
+			buf.Write(tc.File)
+			before := buf.Bytes()
+			fixInsertFinalNewline(&buf, tc.InsertFinalNewline, tc.EolVariant)
+			after := buf.Bytes()
+			err := checkInsertFinalNewline(buf.Bytes(), tc.InsertFinalNewline)
+			if err != nil {
+				t.Logf("before: %q", string(before))
+				t.Logf("after: %q", string(after))
+				t.Errorf("encountered error %s with test configuration %+v", err, tc)
 			}
 		})
 	}

@@ -100,7 +100,7 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 	return fix(ctx, r, fileSize, charset, def)
 }
 
-func fix( //nolint:funlen
+func fix( //nolint:funlen,cyclop
 	_ context.Context,
 	r io.Reader,
 	fileSize int64,
@@ -177,6 +177,10 @@ func fix( //nolint:funlen
 		return nil, errs[0]
 	}
 
+	if def.InsertFinalNewline != nil {
+		fixInsertFinalNewline(buf, *def.InsertFinalNewline, eol)
+	}
+
 	return buf, nil
 }
 
@@ -237,4 +241,23 @@ outer:
 	}
 
 	return data
+}
+
+// fixInsertFinalNewline modifies buf to fix the existence of a final newline.
+// Line endings are assumed to already be consistent within the buffer.
+// A nil buffer or an empty buffer is returned as is.
+func fixInsertFinalNewline(buf *bytes.Buffer, insertFinalNewline bool, endOfLine []byte) {
+	if buf == nil || buf.Len() == 0 {
+		return
+	}
+
+	if insertFinalNewline {
+		if !bytes.HasSuffix(buf.Bytes(), endOfLine) {
+			buf.Write(endOfLine)
+		}
+	} else {
+		for bytes.HasSuffix(buf.Bytes(), endOfLine) {
+			buf.Truncate(buf.Len() - len(endOfLine))
+		}
+	}
 }
