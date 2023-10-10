@@ -10,7 +10,7 @@ import (
 	"github.com/google/go-cmp/cmp"
 )
 
-func TestFixEndOfLine(t *testing.T) {
+func TestFixEndOfLine(t *testing.T) { //nolint:gocognit
 	tests := []struct {
 		Name  string
 		Lines [][]byte
@@ -46,16 +46,20 @@ func TestFixEndOfLine(t *testing.T) {
 			t.Parallel()
 
 			def, err := newDefinition(&editorconfig.Definition{
-				EndOfLine: "lf",
+				EndOfLine: editorconfig.EndOfLineLf,
 			})
 			if err != nil {
 				t.Fatal(err)
 			}
 
 			r := bytes.NewReader(file)
-			out, err := fix(ctx, r, fileSize, "utf-8", def)
+			out, fixed, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
+			}
+
+			if fixed {
+				t.Errorf("file should not have been fixed")
 			}
 
 			result, err := io.ReadAll(out)
@@ -80,9 +84,13 @@ func TestFixEndOfLine(t *testing.T) {
 			}
 
 			r := bytes.NewReader(file)
-			out, err := fix(ctx, r, fileSize, "utf-8", def)
+			out, fixed, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
+			}
+
+			if !fixed {
+				t.Errorf("file should have been fixed")
 			}
 
 			result, err := io.ReadAll(out)
@@ -142,7 +150,7 @@ func TestFixIndentStyle(t *testing.T) {
 			}
 
 			r := bytes.NewReader(tc.File)
-			out, err := fix(ctx, r, fileSize, "utf-8", def)
+			out, _, err := fix(ctx, r, fileSize, "utf-8", def)
 			if err != nil {
 				t.Fatalf("no errors where expected, got %s", err)
 			}
@@ -204,7 +212,7 @@ func TestFixTrimTrailingWhitespace(t *testing.T) {
 			t.Parallel()
 
 			for _, l := range tc.Lines {
-				m := fixTrailingWhitespace(l)
+				m, _ := fixTrailingWhitespace(l)
 
 				err := checkTrimTrailingWhitespace(m)
 				if err != nil {

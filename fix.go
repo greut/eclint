@@ -35,9 +35,15 @@ func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename
 	fileSize := stat.Size()
 	mode := stat.Mode()
 
-	r, err := fixWithFilename(ctx, def, filename, fileSize)
+	r, fixed, err := fixWithFilename(ctx, def, filename, fileSize)
 	if err != nil {
 		return fmt.Errorf("cannot fix %s: %w", filename, err)
+	}
+
+	if !fixed {
+		log.V(1).Info("no fixes to apply", "filename", filename)
+
+		return nil
 	}
 
 	if r == nil {
@@ -56,15 +62,15 @@ func FixWithDefinition(ctx context.Context, d *editorconfig.Definition, filename
 		return fmt.Errorf("error copying file: %w", err)
 	}
 
-	log.V(1).Info("bytes written", "total", n)
+	log.V(1).Info("bytes written", "filename", filename, "total", n)
 
 	return nil
 }
 
-func fixWithFilename(ctx context.Context, def *definition, filename string, fileSize int64) (io.Reader, error) {
+func fixWithFilename(ctx context.Context, def *definition, filename string, fileSize int64) (io.Reader, bool, error) {
 	fp, err := os.Open(filename)
 	if err != nil {
-		return nil, fmt.Errorf("cannot open %s. %w", filename, err)
+		return nil, false, fmt.Errorf("cannot open %s. %w", filename, err)
 	}
 
 	defer fp.Close()
@@ -73,7 +79,7 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 
 	ok, err := probeReadable(fp, r)
 	if err != nil {
-		return nil, fmt.Errorf("cannot read %s. %w", filename, err)
+		return nil, false, fmt.Errorf("cannot read %s. %w", filename, err)
 	}
 
 	log := logr.FromContextOrDiscard(ctx)
@@ -81,18 +87,18 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 	if !ok {
 		log.V(2).Info("skipped unreadable or empty file")
 
-		return nil, nil
+		return nil, false, nil
 	}
 
 	charset, isBinary, err := ProbeCharsetOrBinary(ctx, r, def.Charset)
 	if err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	if isBinary {
 		log.V(2).Info("binary file detected and skipped")
 
-		return nil, nil
+		return nil, false, nil
 	}
 
 	log.V(2).Info("charset probed", "charset", charset)
@@ -101,12 +107,14 @@ func fixWithFilename(ctx context.Context, def *definition, filename string, file
 }
 
 func fix( //nolint:funlen,cyclop
-	_ context.Context,
+	ctx context.Context,
 	r io.Reader,
 	fileSize int64,
 	_ string,
 	def *definition,
-) (io.Reader, error) {
+) (io.Reader, bool, error) {
+	log := logr.FromContextOrDiscard(ctx)
+
 	buf := bytes.NewBuffer([]byte{})
 
 	size := def.IndentSize
@@ -133,7 +141,7 @@ func fix( //nolint:funlen,cyclop
 	case "", UnsetValue:
 		size = 0
 	default:
-		return nil, fmt.Errorf(
+		return nil, false, fmt.Errorf(
 			"%w: %q is an invalid value of indent_style, want tab or space",
 			ErrConfiguration,
 			def.IndentStyle,
@@ -142,7 +150,7 @@ func fix( //nolint:funlen,cyclop
 
 	eol, err := def.EOL()
 	if err != nil {
-		return nil, fmt.Errorf("cannot get EOL: %w", err)
+		return nil, false, fmt.Errorf("cannot get EOL: %w", err)
 	}
 
 	trimTrailingWhitespace := false
@@ -150,19 +158,22 @@ func fix( //nolint:funlen,cyclop
 		trimTrailingWhitespace = *def.TrimTrailingWhitespace
 	}
 
+	fixed := false
 	errs := ReadLines(r, fileSize, func(index int, data []byte, isEOF bool) error {
+		var f bool
 		if size != 0 {
-			data = fixTabAndSpacePrefix(data, c, x)
+			data, f = fixTabAndSpacePrefix(data, c, x)
+			fixed = fixed || f
 		}
 
 		if trimTrailingWhitespace {
-			data = fixTrailingWhitespace(data)
+			data, f = fixTrailingWhitespace(data)
+			fixed = fixed || f
 		}
 
 		if def.EndOfLine != "" && !isEOF {
-			data = bytes.TrimRight(data, "\r\n")
-
-			data = append(data, eol...)
+			data, f = fixEndOfLine(data, eol)
+			fixed = fixed || f
 		}
 
 		_, err := buf.Write(data)
@@ -170,23 +181,41 @@ func fix( //nolint:funlen,cyclop
 			return fmt.Errorf("error writing into buffer: %w", err)
 		}
 
+		log.V(2).Info("fix line", "index", index, "fixed", fixed)
+
 		return nil
 	})
 
 	if len(errs) != 0 {
-		return nil, errs[0]
+		return nil, false, errs[0]
 	}
 
 	if def.InsertFinalNewline != nil {
-		fixInsertFinalNewline(buf, *def.InsertFinalNewline, eol)
+		f := fixInsertFinalNewline(buf, *def.InsertFinalNewline, eol)
+		fixed = fixed || f
 	}
 
-	return buf, nil
+	return buf, fixed, nil
+}
+
+// fixEndOfLine replaces any non eol suffix by the given one.
+func fixEndOfLine(data []byte, eol []byte) ([]byte, bool) {
+	fixed := false
+
+	if !bytes.HasSuffix(data, eol) {
+		fixed = true
+		data = bytes.TrimRight(data, "\r\n")
+		data = append(data, eol...)
+	}
+
+	return data, fixed
 }
 
 // fixTabAndSpacePrefix replaces any `x` by `c` in the given `data`.
-func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) []byte {
+func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) ([]byte, bool) {
 	newData := make([]byte, 0, len(data))
+
+	fixed := false
 
 	i := 0
 	for i < len(data) {
@@ -203,17 +232,19 @@ func fixTabAndSpacePrefix(data []byte, c []byte, x []byte) []byte {
 
 			newData = append(newData, c...)
 
+			fixed = true
+
 			continue
 		}
 
-		return append(newData, data[i:]...)
+		return append(newData, data[i:]...), fixed
 	}
 
-	return data
+	return data, fixed
 }
 
 // fixTrailingWhitespace replaces any whitespace or tab from the end of the line.
-func fixTrailingWhitespace(data []byte) []byte {
+func fixTrailingWhitespace(data []byte) ([]byte, bool) {
 	i := len(data) - 1
 
 	// u -> v is the range to clean
@@ -236,28 +267,37 @@ outer:
 		}
 	}
 
-	if u != v {
+	// If u != v then the line has been fixed.
+	fixed := u != v
+	if fixed {
 		data = append(data[:u], data[v:]...)
 	}
 
-	return data
+	return data, fixed
 }
 
 // fixInsertFinalNewline modifies buf to fix the existence of a final newline.
 // Line endings are assumed to already be consistent within the buffer.
 // A nil buffer or an empty buffer is returned as is.
-func fixInsertFinalNewline(buf *bytes.Buffer, insertFinalNewline bool, endOfLine []byte) {
+func fixInsertFinalNewline(buf *bytes.Buffer, insertFinalNewline bool, endOfLine []byte) bool {
+	fixed := false
+
 	if buf == nil || buf.Len() == 0 {
-		return
+		return fixed
 	}
 
 	if insertFinalNewline {
 		if !bytes.HasSuffix(buf.Bytes(), endOfLine) {
+			fixed = true
+
 			buf.Write(endOfLine)
 		}
 	} else {
 		for bytes.HasSuffix(buf.Bytes(), endOfLine) {
+			fixed = true
 			buf.Truncate(buf.Len() - len(endOfLine))
 		}
 	}
+
+	return fixed
 }
