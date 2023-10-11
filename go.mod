@@ -6,7 +6,7 @@ require (
 	github.com/editorconfig/editorconfig-core-go/v2 v2.6.0
 	github.com/go-logr/logr v1.2.4
 	github.com/gogs/chardet v0.0.0-20211120154057-b7413eaefb8f
-	github.com/google/go-cmp v0.5.9
+	github.com/google/go-cmp v0.6.0
 	github.com/logrusorgru/aurora v2.0.3+incompatible
 	github.com/mattn/go-colorable v0.1.13
 	golang.org/x/term v0.13.0

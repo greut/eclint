@@ -64,13 +64,14 @@ $ eclint -exclude "testdata/**/*"
 
 - `max_line_length` counting UTF-32 characters
 - more tests
-- ability to fix: `insert_final_newline` etc.
 - etc.
 
 ## Thanks for their contributions
 
 - [Viktor Szépe](https://github.com/szepeviktor)
 - [Takuya Fukuju](https://github.com/chalkygames123)
+- [Nicolas Mohr](https://gitlab.com/nicmr)
+- [Zadkiel Aharonian](https://gitlab.com/zadkiel_aharonian_c4)
 
 ## Benchmarks
 
